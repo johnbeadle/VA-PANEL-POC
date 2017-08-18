@@ -46,22 +46,42 @@
             right: 50px;
             top: 100px;
           }
+
+          .lp-va-panel-button {
+
+          }
+
+          .hide-lp-button {
+            display: none;
+          }
+          
+
         </style>
     </head>
     <body>
       <div class="container">
-
-        
-
         <div id="slideout">
           <p class="btn btn-primary need-help vertical-text" id="need-help">Need Help?</button>  
           <form>
-            <p>FQA content goes here...</p>
-            <p><div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusamus eum dolor repellendus amet ab quod cupiditate cumque eaque tempore, sit dolores, harum nam suscipit sunt magni magnam optio? Architecto, nesciunt?</div></p>
-            <p> <button type="button" onclick="checkButtonState()" class="btn btn-info">Click me to check the button state</button> </p>
-            <HR>
-            Actual embedded chat button container is below where the button would sit in the VA Panel
+            <h4 class="display1">FAQ converstion goes here...</h4>
+           
+            <div class="faq-lines ">
+                <ul class="list-group">
+                    <li class="list-group-item faq-chat-line"><b>Customer:</b> Hello</li>
+                    <li class="list-group-item faq-chat-line"><b>Virtual Assistant:</b> How can  I help you?</li>
+                    <li class="list-group-item faq-chat-line"><b>Customer:</b> I cannot login</li>
+                    <li class="list-group-item faq-chat-line"><b>Virtual Assistant:</b> ok I can escalate this to a human please click the chat button below to transfer</li>
+                </ul>
+             
+            </div>
+            <!-- <HR>
+              <p>debug tools:</p>
+              <p> 
+              <button type="button" onclick="checkButtonState()" class="btn btn-info">Click me to check the button state</button> </p>
+            <HR> -->
             <p id="button-container">
+              <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="triggerChatButtonClick();">Click to chat</a>
+              <a id="lp-va-panel-button-offline" href="#" class="btn btn-warning lp-va-panel-button hide-lp-button">All Agents are OFFLINE/BUSY</a>
             </p>
           </form>
         </div>
@@ -73,12 +93,17 @@
         // some POC vars to contain the unique engagement id of the button embedded within the panel
         // you will need this either hard coded into the panel code itself or stored somewhere easily updateable
         // the engagement id of the embedded button within the VA panel will be different on different LivePErson environments - CLONE/PROD
-        // so you will need to store at least 2 different numbers 
-        // if at any point the LIvePerson account has these engagements deleted/recreated then this would impact your code so beware
+        /* 
+        LP const for easier configuration and updating of this POC code.
+        recommend you take a similar approach for your implementation
+        */
         var lpButtonEngagementId;
         var lpButtonState;
-
-
+        var LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID = "lpButtonDiv-va-panel"; // This will be the unique div id for the embedded panel button within the DOM
+        var LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST = "btn btn-success lp-va-panel-button";
+        var LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST = "btn btn-warning lp-va-panel-button";
+        var LP_HIDDEN_BUTTON_CLASS_NAME_LIST = "btn btn-success lp-va-panel-button hide-lp-button";
+        var LP_VA_PANEL_EMBEDDED_BUTTON_IDS = [922185332,111]; // NOTE 111 will be replaced by the final ID in PROD account once known.
         // show how to listen to the various events raised by the chat window/ lpTag and button refreshes
         function bindToChatEvents() {
           // make sure the function and objects exist
@@ -92,16 +117,13 @@
              */
 
             lpTag.events.bind("lpUnifiedWindow", "state",function(e,d){ 
-              console.log("LivePerson Chat Window Event Detected: state == ",e.state); 
-
-              
+              console.log("--> LivePerson Chat Window Event Detected: state == ",e.state); 
               // if(e.state == "init" || e.state == "initialised" || e.state == "waiting" || e.state == "chatting" || e.state == "interactive") {
-              if(e.state == "waiting" || e.state == "resume") {
+              if(e.state == "waiting" || e.state == "resume" || e.state == "interactive") {
                 hideVaPanel();
               }
 
             });
-
 
             /* 
               This event tracks the state of the conversation itself
@@ -111,21 +133,22 @@
                   applicationEnded : post chat survey submitted     
              */
             lpTag.events.bind("lpUnifiedWindow","conversationInfo",function(eventData,appName){
-              console.log('LivePerson conversationInfo event : ',eventData.state);
+              console.log('--> LivePerson conversationInfo event : ',eventData.state);
 
               // if the post chat exit survey has been submitted then auto close the thank you window
               if(eventData.state == "applicationEnded") {
-                console.log(eventData.state,' event fired means post chat survey has been submitted');
+                console.log('--> ',eventData.state,' event fired means post chat survey has been submitted');
                 closeThankyouWindow();
                 showVaPanel();
               }
                // NOTE: if the chat configuration of the LivePerson Campaign does NOT have an exit survey attached, this event will NOT fire
               // Instead you should trigger this code on the "ended" event instead.
               if(eventData.state == "ended") {
+                console.log('--> ',eventData.state,' event fired means post chat survey has been submitted');
                 // only use this conditional if you DO NOT have a post chat exit survey configured
                 // you would put the same code as above to close the thank you screen
-                // closeThankyouWindow()
-                // showVaPanel()
+                closeThankyouWindow()
+                showVaPanel()
               }
 
             });
@@ -140,25 +163,68 @@
             
              */
             lpTag.events.bind("LP_OFFERS", "OFFER_IMPRESSION",function(e,d){
-              
-              var buttonState;
-              if(e.state == "0") {
-                buttonState = "n/a";
-              } else if(e.state == "1") {
-                buttonState = "a button was loaded - the state is online";
-              } else if (e.state == "2") {
-                buttonState = "a button was loaded - the state is offline";
-              }
-
-              if(e.engagementType == "5" && e.engagementId == '922185332') {
+              // check if the type is embedded (5) AND the id matches the array constant of all ids on both accounts DEV/PROD
+              if(e.engagementType == "5" && LP_VA_PANEL_EMBEDDED_BUTTON_IDS.indexOf(e.engagementId) > -1) {
                 // means embedded button and the unique id of this demo POC embedded button
                 // the id will be unique to your account and will differ between DEV and PROD so your code will need to store both values to compare
                 lpButtonEngagementId = e.engagementId; // store the value so we can use it later when we need to query the button state later in the process for an accurate value - this is in case the refresh timer has changed the state from online/offline and vice versa
+                lpTag.events.trigger("VA_PANEL","EMBEDDED_BUTTON_IMPRESSION",{
+                  id:lpButtonEngagementId,
+                  cid:e.campaignId,
+                  state: e.state
+                })
               }
-              console.log("button impression event ",e.state,e.engagementId,buttonState);
+              console.log("--> button impression event ",e.state,e.engagementId,buttonState);
             });
+
+            lpTag.events.bind("VA_PANEL","EMBEDDED_BUTTON_IMPRESSION",function(eventData){
+              // the hidden empty HTML button inside the va panel has been loaded...check the state to determine which custom HTML code for our own button should be shown?
+                console.log('--> VA_PANEL/EMBEDDED_BUTTON_IMPRESSION ',eventData);
+              // as this could happen many times for button on refresh rates, we should always hide both buttons by default and then reshow the relevant one...
+              var lpButtons = document.getElementsByClassName('lp-va-panel-button');
+                console.log('--> hiding buttons // ',lpButtons);
+              for (var i = 0; i < lpButtons.length; i++) {
+                var lpButton = lpButtons[i];
+                lpButton.className = LP_HIDDEN_BUTTON_CLASS_NAME_LIST; // apply static list of class names to hide the button -- replace with however you choose to do this in the panel
+              }
+
+              // this demos how you can control the content of both the online and offline button HTML elements
+              // because you will be "fake" clicking the actual LivePerson button hidden on the page with no content, you can display your own responsive buttons and HTML and then control the click function, pass the chat lines and trigger the chat start.
+              // this section of code just checks the state of the va panel embedded button from LP and allows to choose which one to show
+              // this is because the design agreed allows shows the button at the bottom of the panel - there is NOT an escalation button to reveal it
+              if(eventData.state === 1) {
+                  console.log('--> button is online, show that custom button html element which you can control in the panel');
+                document.getElementById('lp-va-panel-button-online').classList = LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST;
+              } else if (eventData.state === 2) {
+                  console.log('--> button is offline, show that custom button html element which you can control in the panel');
+                document.getElementById('lp-va-panel-button-offline').classList = LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST;
+              }
+            })
+
           }
 
+        }
+
+        function triggerChatButtonClick() {
+          console.log('--> triggerChatButtonClick ... this function will grab the FAQ conversation lines and feed them to the chat window and then click the hidden button using the rendererStub API');
+          // DOCS: https://developers.liveperson.com/trigger-click.html
+
+          if(lpTag && lpTag.taglets && lpTag.taglets.rendererStub){
+            // grab FAQ lines...this POC just gets the HTML content from specific class elements...you will use your own API and functions to get this information from the chat in progress.
+            var faqLines = document.getElementsByClassName('faq-chat-line');
+            var preChatLinesArray = ["Your conversation history so far..."]; // add a message to give context to the chat lines
+            for (var f = 0; f < faqLines.length; f++) {
+              var faqChatLine = faqLines[f].innerHTML;
+              preChatLinesArray.push(faqChatLine);
+            }
+            preChatLinesArray.push("An agent will be with your shortly to continue the discussion..."); // add a message at the end to tell the customer what will happen next
+              console.log('--> preChatLinesArray : ',preChatLinesArray);
+            
+            // call the click function of the hidden embedded button inside the panel div container and feed in the preChatLines array of content
+            var clicked = lpTag.taglets.rendererStub.click(lpButtonEngagementId, {
+              preChatLines: preChatLinesArray
+            });
+          }
         }
 
         function closeThankyouWindow() {
@@ -167,7 +233,7 @@
           // if we find it, click to close the thank you screen
           if(closeBtn) {
             closeBtn.click();
-            console.log('auto closing the thank you screen');
+            console.log('--> auto closing the thank you screen');
            
           }
         }
@@ -181,21 +247,21 @@
         // 2 = offline
         // 4 = busy
         function checkButtonState() {
-          
+          var buttonState = 0;
           if(lpButtonEngagementId) {
             var buttonState = lpTag.taglets.rendererStub.getEngagementState(lpButtonEngagementId).state; // use the number you grabbed earlier when the button was loaded inside the panel
-            console.log('the button id ',lpButtonEngagementId,' has the state of ',buttonState);
+            console.log('--> the button id ',lpButtonEngagementId,' has the state of ',buttonState);
           }
-          
+          return buttonState;
         }
 
         function hideVaPanel() {
-          console.log("LivePerson Chat window is open ... hiding NEED HELP panel and button...");
+          console.log("--> LivePerson Chat window is open ... hiding NEED HELP panel and button...");
           $('#slideout').removeClass('on');
           $('#need-help').hide();
         }
         function showVaPanel() {
-          console.log("LivePerson Chat session has ended ... bringing back NEED HELP button...");
+          console.log("--> LivePerson Chat session has ended ... bringing back NEED HELP button...");
           $('#need-help').show();
         }
 
@@ -210,24 +276,24 @@
             Once this has been done, you MUST register this with LivePerson as shown below so that our tag can search again for the container div matching the id we provide, and deploy the button content accordingly.
 
           */
-          
-          var buttonId = "lpButtonDiv-va-panel"; // This will be the unique div id for the embedded panel button within the DOM
+    
           // only do this once! we only need to create the div tag once when first showing the panel
-          if(!document.getElementById(buttonId)) {
+          if(!document.getElementById(LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID)) {
             // if the div id has NOT already been created, then make one and add to the panel in the required position with the required id
             var buttonContainer = document.getElementById('button-container');
             var buttonDiv = document.createElement('div');
-            buttonDiv.id = buttonId;
+            buttonDiv.id = LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID;
             buttonContainer.appendChild(buttonDiv);
 
             /*************** 
                 REQUIRED
             ****************/
 
-            // register button div zone with LivePerson now div exists within the DOM    
+            // register button div zone with LivePerson now div exists within the DOM   
+            // THIS IS CRUCIAL -it tells our system that the container div for the button now exists and can be attempted to be injected onto the page - in either online/offline state. 
             var sdes = [{
               "type": "pagediv",
-              "divId": buttonId
+              "divId": LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID
             }];
             if(lpTag && lpTag.sdes && lpTag.sdes.send) {
               lpTag.sdes.send(sdes);
