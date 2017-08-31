@@ -1,59 +1,97 @@
-# HSBCNet -- VA PANEL POC
+# HSBC CMB -- VA PANEL POC
 
 ## High Level Process Summary
 
+* Website page opens - already tagged with LivePerson code for monitoring etc (via Tealium)
+* VA Panel is loaded onto page
+  + at this point you should bind to all relevant events using `bindToChatEvents()` function as an example
 * Visitor Opens VA Panel
-* Registering the Chat Button Div Container to load the hidden button
+  * Registering the Chat Button Div Container to load the hidden button -- see `function injectLivePersonEmbeddedButtonContainer`
   * Embedded Chat Button is loaded with online/offline status
   * VA Panel can show/hide custom HTML content responsive buttons
-* Visitor has conversation with AI and can see the chat button at the bottom of panel
+    + e.g. 
+    ```html
+      <p id="button-container">
+        <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="triggerChatButtonClick();">Click to chat</a>
+        <a id="lp-va-panel-button-offline" href="#" class="btn btn-warning lp-va-panel-button hide-lp-button">All Agents are OFFLINE/BUSY</a>
+      </p>
+    ```
+    
+* Visitor has conversation with Ask Andrew A.I. and can see the chat button at the bottom of panel
 * If Visit Clicks Chat Button
-  + call custom function to "fake" click the hidden button to start the chat
-  + inside that custom function, feed in the preChatLines to the chat window
-* Listen for Chat Session Started Event to hide VA Panel
+  + call custom function to "fake" click the hidden button to start the chat -- see `function triggerChatButtonClick`
+  + inside that custom function, feed in the preChatLines to the chat window -- see `function addPreChatLinesToChat`
+* Listen for Chat Session Started Event to hide VA Panel 
+  + see ```lpTag.events.bind("lpUnifiedWindow", "state"...```
 * Listen for Chat Session Ended Event/Exit Survey Submitted Event to re-show VA Panel
+  + see ```lpTag.events.bind("lpUnifiedWindow","conversationInfo"...```
 
-## Define constants...
+## Configuration through `_config`
 
-```js
-var lpButtonEngagementId;
-var lpButtonState;
-var LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID = "lpButtonDiv-va-panel"; // This will be the unique div id for the embedded panel button within the DOM
-var LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST = "btn btn-success lp-va-panel-button";
-var LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST = "btn btn-warning lp-va-panel-button";
-var LP_HIDDEN_BUTTON_CLASS_NAME_LIST = "btn btn-success lp-va-panel-button hide-lp-button";
-var LP_VA_PANEL_EMBEDDED_BUTTON_IDS = [922185332,111]; // NOTE 111 will be replaced by the final ID in PROD account once known.
-// show how to listen to the various events raised by the chat window/ lpTag and button refreshes
-```
-
-
-## Registering the Chat Button Div Container
+The poc.html file shows an approach to organise the config for all LP panel related code.
 
 ```js
-if(!document.getElementById(LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID)) {
-  // if the div id has NOT already been created, then make one and add to the panel in the required position with the required id
-  var buttonContainer = document.getElementById('button-container');
-  var buttonDiv = document.createElement('div');
-  buttonDiv.id = LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID;
-  buttonContainer.appendChild(buttonDiv);
-
-  /*************** 
-      REQUIRED
-  ****************/
-
-  // register button div zone with LivePerson now div exists within the DOM   
-  // THIS IS CRUCIAL -it tells our system that the container div for the button now exists and can be attempted to be injected onto the page - in either online/offline state. 
-  var sdes = [{
-    "type": "pagediv",
-    "divId": LP_VA_PANEL_HIDDEN_EMBEDDED_BUTTON_DIV_CONTAINER_ID
-  }];
-  if(lpTag && lpTag.sdes && lpTag.sdes.send) {
-    lpTag.sdes.send(sdes);
-  } else if (lpTag && lpTag.sdes.push) {
-    lpTag.sdes.push(sdes);
-  }
-  // ^ The above will tell LP that the div now exists and is ready to receive the content - online/offline/busy etc...
-}
+var _config = {
+  USING_PROXY_BUTTON : true, // setting this to FALSE will tell the code that you are NOT going to be providing your own custom buttons on the page. This will require an accompanying change on the LE2 admin side to insert the HTML of the button content rather than just empty HTML when using this setting set to TRUE
+  SEND_LAST_QUESTION_ASKED_INTO_CHAT : false, // currently not in scope - follow the use of this to see how you can add this feature to the code in the future.
+  EMBEDDED_BUTTON_ID_LOADED:null,
+  EMBEDDED_BUTTON_TYPE: 5,
+  EMBEDDED_BUTTON_IDS : [955221432,955231332], // These are the unique button ids within our system that correspond to your CLONE/PROD accounts
+  // PLEASE NOTE ^^^ you should NOT need to change the array above - I have preconfigured it with your engagement ids for your clone/prod accounts
+  EMBEDDED_BUTTON_DIV_CONTAINER_ID : "lpButtonDiv-need-help-panel",
+  VA_PANEL_EVENT_NAMESPACE : "VA_PANEL",
+  VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME : "EMBEDDED_BUTTON_IMPRESSION",
+  VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS :  "faq-chat-line" // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
+};
 ```
 
+### Which options should NOT be changed?
 
++ `_config.EMBEDDED_BUTTON_ID_LOADED`
+> used to store the id of the engagement button when loaded to be used later on in other supporting functions and methods
++ `_config.EMBEDDED_BUTTON_TYPE` 
+> Maps to the correct type value for Embedded engagements with the LP system
++ `_config.EMBEDDED_BUTTON_DIV_CONTAINER_ID` 
+> This is the unique div container ID where the `lpTag` object will attempt to load in the button when you register this destination with us via `injectLivePersonEmbeddedButtonContainer()` on panel expansion.
+> it matches the value setup in the LivePerson admin system. Editing this value would cause the button not to load as we cannot find the expected destination within the DOM.
++ `_config.VA_PANEL_EVENT_NAMESPACE` 
+> unique namespace for a custom event we trigger using the `lpTag.events` bridge to notify the panel code that the button in question has been loaded allowing you to react
++ `_config.VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME` 
+> the unique event name to correspond with the above namespace
+
+### Which options can I change?
+
++ `_config.USING_PROXY_BUTTON`
+  + `true` ==> tells the code you will be displaying your own HTML buttons for the online/offline state of the LivePerson Embedded button which will be loaded. 
+    + **PLEASE NOTE** This option is recommended for responsive requirements as any images deployed by the LivePerson system will not responsive. We can deploy HTML which you style via CSS if needed.
+    + If using this option ensure that whatever HTML elements of your **ONLINE** button state have an onclick function call to `triggerChatButtonClick` (or equivalent code) which will start the chat window by calling our API and fake clicking the actual button loaded on the page - which will probably be hidden/have no actual viewable HTML content.
+    + If you do not wish to handle the custom elements then suggest setting this to `false`
+  + `false` ==> will exclude the following functions from execution ... `hideLivePersonButtonContainers` AND `refreshProxyButtonStatus` ... this is because the LivePerson button shown will contain the HTML required for the online/offline states.
+
++ `_config.SEND_LAST_QUESTION_ASKED_INTO_CHAT`
+  + `true` ==> **ONLY HAS AN IMPACT IF `_config.USING_PROXY_BUTTON` == true** -- because default chat button clicks cannot be intercepted. Only using a proxy button allows this feature to be in scope.
+    + enables the `addPreChatLinesToChat` example function to return some `preChatLines` to the chat window as part of the `triggerChatButtonClick` function call.
+    + Follow this function's approach if you want to pass something like the last question asked to AskAndrew into the chat window for the agent and consumer to see in the header.
+    + **PLEASE NOTE** this feature shows the key API calls you need to make but how you get the information in question from AskAndrew is down to you. 
+    + The only requirement is you pass it into the click call with the named parameter as an array [] of Strings.
+  + `false` (default) ==> disables the behaviour
+
+
+### POC Styling related options...
+
+The following are all style related for the purposes of the POC demo. 
+> You may/may not need them for your own implementation.
+
+```js
+var LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS = "lp-va-panel-button";
+
+var LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST = "btn btn-success " + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
+
+var LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST = "btn btn-warning " + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
+
+var LP_HIDDEN_BUTTON_CLASS_NAME_LIST = "btn btn-success hide-lp-button " + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
+```
+
+## Example page
+
+For further details please refer to the comments within the `poc.html` file
