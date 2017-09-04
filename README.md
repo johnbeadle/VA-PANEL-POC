@@ -41,7 +41,9 @@ var _config = {
   EMBEDDED_BUTTON_DIV_CONTAINER_ID : "lpButtonDiv-need-help-panel",
   VA_PANEL_EVENT_NAMESPACE : "VA_PANEL",
   VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME : "EMBEDDED_BUTTON_IMPRESSION",
-  VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS :  "faq-chat-line" // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
+  VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS :  "faq-chat-line", // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
+  VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_INTRO :  "Your conversation history so far...", //replace with your own message if needed else set to blank or remove this code from the function
+  VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_TAGLINE : "An agent will be with your shortly to continue the discussion..."//replace with your own message if needed else set to blank or remove this code from the function
 };
 ```
 
@@ -76,6 +78,11 @@ var _config = {
     + The only requirement is you pass it into the click call with the named parameter as an array [] of Strings.
   + `false` (default) ==> disables the behaviour
 
++ `_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_INTRO`
++ `_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_TAGLINE`
+
+> used to insert chat lines before and after the acutal contents of last question asked/answered by AskAndrew
+> More for reference to show how this can be done.
 
 ### POC Styling related options...
 

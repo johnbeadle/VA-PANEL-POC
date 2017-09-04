@@ -104,7 +104,9 @@
           EMBEDDED_BUTTON_DIV_CONTAINER_ID : "lpButtonDiv-need-help-panel",
           VA_PANEL_EVENT_NAMESPACE : "VA_PANEL",
           VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME : "EMBEDDED_BUTTON_IMPRESSION",
-          VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS :  "faq-chat-line" // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
+          VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS :  "faq-chat-line", // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
+          VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_INTRO :  "Your conversation history so far...", //replace with your own message if needed else set to blank or remove this code from the function
+          VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_TAGLINE : "An agent will be with your shortly to continue the discussion..."//replace with your own message if needed else set to blank or remove this code from the function
         };
 
         /*
@@ -251,13 +253,13 @@
 
         function addPreChatLinesToChat() {
           // replace logic with however you get the last question/chat history from AskAndrew session and return an array of strings to feed into the chat window.
-          var faqLines = document.getElementsByClassName();
-          var preChatLinesArray = ["Your conversation history so far..."]; // add a message to give context to the chat lines
+          var faqLines = document.getElementsByClassName(_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS);
+          var preChatLinesArray = [_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_INTRO]; // add a message to give context to the chat lines
           for (var f = 0; f < faqLines.length; f++) {
             var faqChatLine = faqLines[f].innerHTML;
             preChatLinesArray.push(faqChatLine);
           }
-          preChatLinesArray.push("An agent will be with your shortly to continue the discussion..."); // add a message at the end to tell the customer what will happen next
+          preChatLinesArray.push(_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_TAGLINE); // add a message at the end to tell the customer what will happen next
             console.log('--> preChatLinesArray : ',preChatLinesArray);
             
           return preChatLinesArray;
@@ -339,6 +341,7 @@
         });
 
         bindToChatEvents();  // bind to events
+        
       </script>   
     </body>
 </html>
