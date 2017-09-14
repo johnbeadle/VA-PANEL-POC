@@ -179,14 +179,6 @@
           
         }
 
-        function lpPanelInit() {
-
-          
-          //still call bindToChatEvents so we listen for other events that may still fire.
-          bindToChatEvents();
-          
-        }
-
         function bindToChatEvents() {
           // handle scenario in case the window has already reopened on another page before the panel code is executed.
           if (lpTag && lpTag.events && lpTag.events.hasFired) {
