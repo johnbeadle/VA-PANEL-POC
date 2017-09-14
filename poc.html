@@ -179,8 +179,27 @@
           
         }
 
-        function bindToChatEvents() {
+        function lpPanelInit() {
+
           
+          //still call bindToChatEvents so we listen for other events that may still fire.
+          bindToChatEvents();
+          
+        }
+
+        function bindToChatEvents() {
+          // handle scenario in case the window has already reopened on another page before the panel code is executed.
+          if (lpTag && lpTag.events && lpTag.events.hasFired) {
+            // events.hasFired exists - check if the lpTag window is already on the page before we got here?
+            // if we find any events, we should hide the panel
+            var _windowEvents = lpTag.events.hasFired("lpUnifiedWindow", "state");
+            if (_windowEvents.length > 0) {
+              // the window has fired events meaning it is being shown - hide the panel
+              // if you only want to hide on specific conditions check the values of _windowEvents[].data.state property
+              hideVaPanel();
+            }
+          } 
+
           // make sure the function and objects exist
           if(lpTag && lpTag.events && lpTag.events.bind) {
                         
@@ -350,7 +369,7 @@
         });
 
         bindToChatEvents();  // bind to events
-        
+       
       </script>   
     </body>
 </html>
