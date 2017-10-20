@@ -1,4 +1,6 @@
-# HSBC CMB -- VA PANEL POC
+# HSBCNet VA Panel Integration - WIP
+
+Under Construction...
 
 ## High Level Process Summary
 
@@ -28,7 +30,6 @@
 
 ## Configuration through `_config`
 
-The poc.html file shows an approach to organise the config for all LP panel related code.
 
 ```js
 var _config = {
@@ -100,5 +101,4 @@ var LP_HIDDEN_BUTTON_CLASS_NAME_LIST = "btn btn-success hide-lp-button " + LP_EX
 ```
 
 ## Example page
-
-For further details please refer to the comments within the `poc.html` file
+ TBC....
