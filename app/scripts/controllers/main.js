@@ -83,8 +83,5 @@ angular.module('HsbcNetSampleApp')
 
     // start 
     LivePersonVirtualAssistantModule.start();
-    // $('.need-help').click(function () {
-    //   togglePanel(); // show/hide the panel
-    //   injectLivePersonEmbeddedButtonContainer();
-    // });
+
   });

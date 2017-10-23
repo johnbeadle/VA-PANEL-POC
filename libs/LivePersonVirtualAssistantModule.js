@@ -117,7 +117,8 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     }
     //still call bindToChatEvents so we listen for other events that may still fire.
     if(_eventBindingsDone === false) {
-      bindToChatEvents();      
+      bindToChatEvents();
+      _eventBindingsDone = true;      
     } else {
       console.log('// -> eventBindings already enabled...skipping');
     }
@@ -255,8 +256,39 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     }
   }
 
+  function _toggleClass(selector,className) {
+    var el = document.querySelector(selector);
+    if (el.classList) {
+      el.classList.toggle(className);
+    } else {
+      var classes = el.className.split(' ');
+      var existingIndex = classes.indexOf(className);
+
+      if (existingIndex >= 0)
+        classes.splice(existingIndex, 1);
+      else
+        classes.push(className);
+
+      el.className = classes.join(' ');
+    }
+  }
+
+  function _removeClass(selector, className) {
+    var el = document.querySelector(selector);
+    
+    if (el.classList) {
+      el.classList.remove(className);
+    }
+    else {
+      el.className = el.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
+    }
+
+  }
+
   function togglePanel(selector) {
-    $(selector || _config.VA_PANEL_CONTAINER_SELECTOR).toggleClass('on');
+    // $(selector || _config.VA_PANEL_CONTAINER_SELECTOR).toggleClass('on');
+    // $(selector || _config.VA_PANEL_CONTAINER_SELECTOR).toggleClass('on');
+    _toggleClass(selector|| _config.VA_PANEL_CONTAINER_SELECTOR,'on');
   }
 
   function checkButtonState() {
@@ -278,19 +310,27 @@ Styling and class names used by the POC - may or may not be relevant to how you 
 
   function escalateToChat() {
     var state = checkButtonState();
+    if(state != BUTTON_STATES.ONLINE) {
+      return false;
+    }
+
     if(state == BUTTON_STATES.ONLINE) {
       triggerChatButtonClick();
     } 
   }
   function hideVaPanel(panelIdSelector,helpBtnIdSelector) {
     console.log('--> LivePerson Chat window is open ... hiding NEED HELP panel and button...');
-    $(panelIdSelector || _config.VA_PANEL_CONTAINER_SELECTOR).removeClass('on');
-    $(helpBtnIdSelector || '#need-help').hide();
+    // $(panelIdSelector || _config.VA_PANEL_CONTAINER_SELECTOR).removeClass('on');
+    _removeClass(panelIdSelector || _config.VA_PANEL_CONTAINER_SELECTOR,'on');
+    document.querySelector(helpBtnIdSelector || '#need-help').style.display = 'none';
+    // $(helpBtnIdSelector || '#need-help').hide();
   }
 
   function showVaPanel(helpBtnIdSelector) {
     console.log('--> LivePerson Chat session has ended ... bringing back NEED HELP button...');
-    $(helpBtnIdSelector || '#need-help').show();
+    // $(helpBtnIdSelector || '#need-help').show();
+    document.querySelector(helpBtnIdSelector || '#need-help').style.display = '';
+    
   }
 
   function injectLivePersonEmbeddedButtonContainer() {
