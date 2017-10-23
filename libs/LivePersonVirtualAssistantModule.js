@@ -4,6 +4,7 @@ var LivePersonVirtualAssistantModule = (function () {
     SEND_LAST_QUESTION_ASKED_INTO_CHAT: true, 
     EMBEDDED_BUTTON_ID_LOADED: null,
     EMBEDDED_BUTTON_TYPE: 5,
+    ENGAGEMENT_NAME_SHORTCODE: ':vap:', // this will used to pattern match against the name of the engagements to also check for button matches for VAP specific engagements. #
     EMBEDDED_BUTTON_IDS: [972162932], // These are the unique button ids within our system that correspond to your CLONE/PROD accounts
     // PLEASE NOTE ^^^ you should NOT need to change the array above - I have preconfigured it with your engagement ids for your clone/prod accounts
     EMBEDDED_BUTTON_DIV_CONTAINER_ID: 'lpButtonDiv-need-help-panel',
@@ -35,7 +36,10 @@ Styling and class names used by the POC - may or may not be relevant to how you 
 
   var _eventBindingsDone = false;
 
+
   function checkIfButtonImpressionIsForVaPanel(e, d) {
+    console.log('--> checkIfButtonImpressionIsForVaPanel // ', e.state, e.engagementId,e.engagementName);
+    
     /* 
      This event fires every time a button is displayed on the page
      You will need to check the e.engagementType value to see what type it is.
@@ -43,19 +47,25 @@ Styling and class names used by the POC - may or may not be relevant to how you 
      otherwise the engagementName property may give some indication if named correctly on the liveperson side.
     */
     // check if the type is embedded (5) AND the id matches the array constant of all ids on both accounts DEV/PROD
-    if (e.engagementType == _config.EMBEDDED_BUTTON_TYPE && _config.EMBEDDED_BUTTON_IDS.indexOf(e.engagementId) > -1) {
+    // .match(/:vap:/g);
+    var _regexCheckEngagementName = new RegExp(_config.ENGAGEMENT_NAME_SHORTCODE,'g');
+    if (e.engagementType == _config.EMBEDDED_BUTTON_TYPE && ( _config.EMBEDDED_BUTTON_IDS.indexOf(e.engagementId) > -1 || _regexCheckEngagementName.test(e.engagementName) ) )
+    {
       // means embedded button and the unique id the button matches the specific buttons we have configured with the LE2 system to be shown within the VA panel
       // LP_VA_PANEL_EMBEDDED_BUTTON_IDS[] array contains the expected/allowed values
       _config.EMBEDDED_BUTTON_ID_LOADED = e.engagementId; // store the value so we can use it later when we need to query the button state later in the process for an accurate value - this is in case the refresh timer has changed the state from online/offline and vice versa
-
+      console.log('--> checkIfButtonImpressionIsForVaPanel // passed validation -> is a VA Panel related engagement => ', e.state, e.engagementId,e.engagementName);
+      
       // trigger a custom event using the lpTag.events bridge to notify other parts of the code that we have successfull loaded the embedded button for VA panel
       lpTag.events.trigger(_config.VA_PANEL_EVENT_NAMESPACE, _config.VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME, {
         id: e.engagementId,
+        name: e.engagementName,
         cid: e.campaignId,
         state: e.state
       });
+    } else {
+      console.log('--> checkIfButtonImpressionIsForVaPanel // IGNORING => NOT a VA Panel related engagement / button event => ', e.state, e.engagementId,e.engagementName);
     }
-    console.log('--> button impression event ', e.state, e.engagementId, buttonState);
   }
 
   function hideLivePersonButtonContainers() {
