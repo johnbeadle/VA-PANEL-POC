@@ -112,14 +112,19 @@ function lpPanelInit() {
 // workaround for #CMBWSUAT-31
 function checkWindowStatus(element) {
   var lpChatWindowEvents = lpTag.events.hasFired('lpUnifiedWindow', 'conversationInfo');
-  console.log('-> chat window events when clicking close button', lpChatWindowEvents);
+  console.log('-> LivePerson checkWindowStatus:: chat window events when clicking close button', lpChatWindowEvents);
  
   var lastEvent = lpChatWindowEvents.pop();
-  if (lastEvent.data.state == 'preChat' || lastEvent.data.state == 'waiting') {
+  if (lastEvent.data.state == 'preChat' || lastEvent.data.state == 'waiting' || lastEvent.data.state == 'postChat') {
     // visitor abandonded without submitted survey or connecting to agent...show panel
-    console.log('-> lastEvent ', lastEvent.data.state);
-    console.log('-> visitor abandonded without submitted survey or connecting to agent...show panel');
+    console.log('-> LivePerson checkWindowStatus:: lastEvent ', lastEvent.data.state);
+    console.log('-> LivePerson checkWindowStatus:: visitor abandonded without submitting prechat survey / or connecting to agent / or did not submit post chat survey...show panel');
     showVaPanel();
+  }
+  if(lastEvent.data.state == 'postChat') {
+    console.log('-> LivePerson checkWindowStatus:: closeThankyouWindow ', lastEvent.data.state);
+    
+    closeThankyouWindow();    
   }
 }
 
@@ -134,6 +139,35 @@ function bindToChatEvents() {
       hideVaPanel();
     }
   } 
+  
+  var _waitForHooks = setInterval(function(){
+    var _waitForHooksCounter = 0;
+    if (lpTag && lpTag.hooks && lpTag.hooks ) {
+      clearInterval(_waitForHooks);
+      lpTag.hooks.push({
+        name: 'BEFORE_SUBMIT_SURVEY',
+        callback: function (options) {
+          console.log('--> LivePerson :: BEFORE_SUBMIT_SURVEY options ',options, options.data.surveyType);
+          if(options.data.surveyType == 'preChatSurvey' && options.data.surveyData === null) {
+            // no prechat survey data = abandoned
+            console.log('--> LivePerson :: BEFORE_SUBMIT_SURVEY//preChatSurvey --> no surveyData so closing thank you window and showing panel ',options, options.data.surveyData);
+            showVaPanel();
+            closeThankyouWindow();  
+          }
+
+          if(options.data.surveyType == 'postChatSurvey') {
+            console.log('--> LivePerson :: BEFORE_SUBMIT_SURVEY//postChatSurvey -->  closing thank you window and showing panel ',options, options.data.surveyData); 
+            showVaPanel();
+            closeThankyouWindow();    
+          }
+          return options;
+        }
+      });
+    } else if (_waitForHooksCounter > 10) {
+      console.log('--> LivePerson :: cancelling loop to use lpTag.hooks after 2 seconds trying...survey close events will not capture all use cases as a result!',_waitForHooksCounter); 
+      clearInterval(_waitForHooks); // stop looping for hooks after 2 seconds
+    }
+  },200);
   // make sure the function and objects exist
   if (lpTag && lpTag.events && lpTag.events.bind) {
 
@@ -144,9 +178,8 @@ function bindToChatEvents() {
         possible values from e.state object:
         init / initialised / waiting / chatting / interactive / resume
      */
-
       console.log('--> LivePerson Chat Window Event Detected: state == ', e.state);
-      if (e.state == 'preChat' || e.state == 'waiting' || e.state == 'resume' || e.state == 'interactive') {
+      if (e.state == 'preChat' || e.state == 'waiting' || e.state == 'resume' || e.state == 'interactive' || e.state == 'postChat') {
         hideVaPanel();
       }
     });
@@ -166,7 +199,7 @@ function bindToChatEvents() {
         var closeBtn = document.querySelector('.lp_close');
         var matches = document.getElementsByClassName('lp_close');
         for (var i = 0; i < matches.length; i++) {
-          matches[i].addEventListener('click', checkWindowStatus, false);
+          matches[i].addEventListener('click', checkWindowStatus);
         }
 
       }
@@ -177,20 +210,9 @@ function bindToChatEvents() {
         closeThankyouWindow();
         showVaPanel();
       }
-      // NOTE: if the chat configuration of the LivePerson Campaign does NOT have an exit survey attached, this event will NOT fire
-      // Instead you should trigger this code on the "ended" event instead.
-      if (eventData.state == 'ended') {
-        console.log('--> ', eventData.state, ' event fired means post chat survey has been submitted');
-        // only use this conditional if you DO NOT have a post chat exit survey configured
-        // you would put the same code as above to close the thank you screen
-        closeThankyouWindow();
-        showVaPanel();
-      }
 
     });
-
     lpTag.events.bind('LP_OFFERS', 'OFFER_IMPRESSION', checkIfButtonImpressionIsForVaPanel);
-
     // custom event to react to when other parts of the code detect the button loaded on the page is for the VA Panel
     lpTag.events.bind(_config.VA_PANEL_EVENT_NAMESPACE, _config.VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME, showTheLivePersonButtonInsideVaPanel);
 
