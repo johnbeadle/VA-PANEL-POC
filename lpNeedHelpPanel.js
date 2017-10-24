@@ -115,16 +115,26 @@ function checkWindowStatus(element) {
   console.log('-> LivePerson checkWindowStatus:: chat window events when clicking close button', lpChatWindowEvents);
  
   var lastEvent = lpChatWindowEvents.pop();
+  console.log('-> LivePerson checkWindowStatus:: lastEvent ', lastEvent.data.state);
+  
   if (lastEvent.data.state == 'preChat' || lastEvent.data.state == 'waiting' || lastEvent.data.state == 'postChat') {
     // visitor abandonded without submitted survey or connecting to agent...show panel
-    console.log('-> LivePerson checkWindowStatus:: lastEvent ', lastEvent.data.state);
     console.log('-> LivePerson checkWindowStatus:: visitor abandonded without submitting prechat survey / or connecting to agent / or did not submit post chat survey...show panel');
     showVaPanel();
   }
   if(lastEvent.data.state == 'postChat') {
     console.log('-> LivePerson checkWindowStatus:: closeThankyouWindow ', lastEvent.data.state);
-    
+
     closeThankyouWindow();    
+  }
+  // issue #4 FIX
+  if(lastEvent.data.state == 'ended') {
+    var previousEvent = lpChatWindowEvents.pop();
+    if (previousEvent.data.state == 'chatting' || previousEvent.data.state == 'waiting') {
+      console.log('-> LivePerson  checkWindowStatus :: previousEvent = chatting OR waiting => lastEvent = ended => no POST chat survey => closeThankyouWindow() and showPanel',previousEvent.data.state,lastEvent.data.state);
+      showVaPanel();
+      closeThankyouWindow();
+    }
   }
 }
 
@@ -201,10 +211,14 @@ function bindToChatEvents() {
         for (var i = 0; i < matches.length; i++) {
           matches[i].addEventListener('click', checkWindowStatus);
         }
+      }
 
+      if (eventData.state == 'ended') {
+        checkWindowStatus(); // will check event sequence to determine whether or not to showPanel #4
       }
 
       // if the post chat exit survey has been submitted then auto close the thank you window
+
       if (eventData.state == 'applicationEnded') {
         console.log('--> ', eventData.state, ' event fired means post chat survey has been submitted');
         closeThankyouWindow();
