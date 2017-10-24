@@ -8,13 +8,21 @@
  * Controller of the HsbcNetSampleApp
  */
 angular.module('HsbcNetSampleApp')
-  .controller('MainCtrl', function ($scope,$window,$location) {
+  .controller('MainCtrl', function ($scope,$window,$location,$routeParams) {
     this.awesomeThings = [
       'HTML5 Boilerplate',
       'AngularJS',
       'Karma'
     ];
     var vm = this;
+
+    var defaultLanguage = 'en_uk';
+
+    // set language based on optional routeParams or fallback to default
+    vm.customerLanguage = $routeParams.lang || defaultLanguage;
+
+    console.log('--> customerLanguage => ',vm.customerLanguage);
+
     vm.customerAskedToughQuestion = false;
 
     vm.togglePanel = function() {
@@ -48,7 +56,7 @@ angular.module('HsbcNetSampleApp')
       'numItems': 1,  //NUMBER OF ITEMS IN CART
       'products': [{
         'product': {
-          'name': 'en_uk'
+          'name': vm.customerLanguage
         }, 'quantity': 1
       }]
     };

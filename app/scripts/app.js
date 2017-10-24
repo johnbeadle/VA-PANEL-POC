@@ -15,17 +15,17 @@ angular
   ])
   .config(function ($routeProvider) {
     $routeProvider
-      .when('/', {
+      .when('/home/:lang?', {
         templateUrl: 'views/main.html',
         controller: 'MainCtrl',
         controllerAs: 'vm'
       })
-      .when('/about', {
+      .when('/about/:lang?', {
         templateUrl: 'views/about.html',
         controller: 'AboutCtrl',
         controllerAs: 'vm'
       })
       .otherwise({
-        redirectTo: '/'
+        redirectTo: '/home/'
       });
   });
