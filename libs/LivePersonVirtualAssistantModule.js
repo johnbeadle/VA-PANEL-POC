@@ -38,7 +38,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
 
 
   function checkIfButtonImpressionIsForVaPanel(e, d) {
-    console.log('--> checkIfButtonImpressionIsForVaPanel // ', e.state, e.engagementId,e.engagementName);
+    // console.log('--> checkIfButtonImpressionIsForVaPanel // ', e.state, e.engagementId,e.engagementName);
     
     /* 
      This event fires every time a button is displayed on the page
@@ -54,7 +54,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
       // means embedded button and the unique id the button matches the specific buttons we have configured with the LE2 system to be shown within the VA panel
       // LP_VA_PANEL_EMBEDDED_BUTTON_IDS[] array contains the expected/allowed values
       _config.EMBEDDED_BUTTON_ID_LOADED = e.engagementId; // store the value so we can use it later when we need to query the button state later in the process for an accurate value - this is in case the refresh timer has changed the state from online/offline and vice versa
-      console.log('--> checkIfButtonImpressionIsForVaPanel // passed validation -> is a VA Panel related engagement => ', e.state, e.engagementId,e.engagementName);
+      console.log('--> *** // passed validation -> is a VA Panel related engagement => ', e.state, e.engagementId,e.engagementName);
       
       // trigger a custom event using the lpTag.events bridge to notify other parts of the code that we have successfull loaded the embedded button for VA panel
       lpTag.events.trigger(_config.VA_PANEL_EVENT_NAMESPACE, _config.VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME, {
@@ -64,14 +64,14 @@ Styling and class names used by the POC - may or may not be relevant to how you 
         state: e.state
       });
     } else {
-      console.log('--> checkIfButtonImpressionIsForVaPanel // IGNORING => NOT a VA Panel related engagement / button event => ', e.state, e.engagementId,e.engagementName);
+      console.log('--> button event => ', e.engagementName,e.state, e.engagementId);
     }
   }
 
   function hideLivePersonButtonContainers() {
     // ...check the state to determine which custom HTML code for our own button should be shown?
     var lpButtons = document.getElementsByClassName(LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS);
-    console.log('--> hiding buttons // ', lpButtons);
+    // console.log('--> hiding buttons // ', lpButtons);
     for (var i = 0; i < lpButtons.length; i++) {
       var lpButton = lpButtons[i];
       lpButton.className = LP_HIDDEN_BUTTON_CLASS_NAME_LIST; // apply static list of class names to hide the button -- replace with however you choose to do this in the panel
@@ -235,11 +235,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
         // NOTE: if the chat configuration of the LivePerson Campaign does NOT have an exit survey attached, this event will NOT fire
         // Instead you should trigger this code on the "ended" event instead.
         if (eventData.state == 'ended') {
-          console.log('--> ', eventData.state, ' event fired means post chat survey has been submitted');
-          // only use this conditional if you DO NOT have a post chat exit survey configured
-          // you would put the same code as above to close the thank you screen
-          closeThankyouWindow();
-          showVaPanel();
+          checkWindowStatus();
         }
 
       });

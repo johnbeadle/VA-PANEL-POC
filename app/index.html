@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html ng-app="HsbcNetSampleApp">
   <head>
     <meta charset="utf-8">
     <title></title>
@@ -22,48 +22,138 @@
   <script src="scripts/angular.min.js"></script>
   <script src="scripts/angular-route.js"></script>
   <script src="scripts/angular-cookies.js"></script>
-  <body ng-app="HsbcNetSampleApp">
+  <body ng-controller="MainCtrl as mainCtrl" ng-cloak>
+    
+    <div class="container-fluid">
+      <div class="header">
+        <div class="navbar navbar-default" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+        
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#js-navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+        
+              <a class="navbar-brand" href="#/home">HSBCNet VA Panel Example SPA</a>
+            </div>
+        
+            <div class="collapse navbar-collapse" id="js-navbar-collapse">
+        
+              <ul class="nav navbar-nav">
+                <li class="active">
+                  <a href="#/home/{{mainCtrl.customerCountry}}/{{mainCtrl.customerLanguage}}">Home</a>
+                </li>
+                <li>
+                  <a ng-href="#/about/{{mainCtrl.customerCountry}}/{{mainCtrl.customerLanguage}}">About</a>
+                </li>
+                <!-- <li></li> -->
+              </ul>
+            </div>
+        
+          </div>
+        </div>
+        <div class="container">
+          <p>Select your country: 
+            <a class="glyphicon glyphicon-globe" ng-click="mainCtrl.changeCountry('GB')">GB</a> 
+            <a class="glyphicon glyphicon-globe" ng-click="mainCtrl.changeCountry('MX')">MX</a>
+          </p>
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <!-- <th>#</th> -->
+                <th>Selected Country</th>
+                <th>Supported Languages</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-show="mainCtrl.customerCountry == 'GB'">
+                <td><i class="glyphicon glyphicon-globe"> {{mainCtrl.customerCountry}}</i></td>
+                <td>
+                  <ul>
+                    <li>
+                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage('en_uk')">en_uk</a>
+                    </li>
+                    <li>
+                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage('en_us')">en_us</a>
+                    </li>
+                  </ul>
+                </td>
+              </tr>
+              <tr ng-show="mainCtrl.customerCountry == 'MX'">
+                <td>
+                  <i class="glyphicon glyphicon-globe"> {{mainCtrl.customerCountry}}</i>
+                </td>
+                <td>
+                  <ul>
+                    <li>
+                      <a ng-click="mainCtrl.changeLanguage('es_mx')">Spanish (es)</a>
+                    </li>
+                    <li>
+                      <a ng-click="mainCtrl.changeLanguage('en')">English (en)</a>
+                    </li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div ng-view class="container-fluid"></div>
+      <div id="slideout">
+        <p class="btn btn-primary need-help vertical-text" id="need-help" ng-click="mainCtrl.togglePanel()">Need Help?</p>
+        <form>
+          <h4 class="display1">FAQ converstion goes here...</h4>
+      
+          <div class="faq-lines ">
+            <ul class="list-group">
+              <li class="list-group-item faq-chat-line">
+                <b>Customer:</b> Hello</li>
+              <li class="list-group-item faq-chat-line">
+                <b>Virtual Assistant:</b> How can I help you?</li>
+              <li class="list-group-item faq-chat-line alert-warning" ng-if="mainCtrl.customerAskedToughQuestion === true">
+                <b>Customer:</b> I cannot login</li>
+              <li class="list-group-item faq-chat-line" ng-if="mainCtrl.agentsAvailable === true">
+                <b>Virtual Assistant:</b> Sorry I cannot answer that question for you...
+                <br> would you like to speak with an agent?
+                <BR>
+                <p ng-click="mainCtrl.escalateToChat()">
+                  <strong>
+                    <u>Yes</u>
+                  </strong>
+                </p>
+                <p>No</p>
+              </li>
+              <li class="list-group-item faq-chat-line" ng-if="mainCtrl.agentsAvailable === false">
+                <b>Virtual Assistant:</b> Sorry I cannot answer that question for you...
+                <BR>
+                <p>(agents are offline so no escalate to chat option shown!)</p>
+              </li>
+            </ul>
+            <button class="btn btn-warning" ng-click="mainCtrl.askToughQuestion()">Ask Tough Question</button>
+            <HR>
+          </div>
+      
+          <p id="button-container">
+            <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="LivePersonVirtualAssistantModule.escalateToChat();">Click to chat</a>
+            <a id="lp-va-panel-button-offline" href="#" class="btn btn-warning lp-va-panel-button hide-lp-button">All Agents are OFFLINE/BUSY</a>
+          </p>
+        </form>
+      </div>
+      <div class="footer">
+        <div class="container">
+        </div>
+      </div>
+    </div>
     <!--[if lte IE 8]>
       <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
 
     <!-- Add your site or application content here -->
-    <div class="header">
-      <div class="navbar navbar-default" role="navigation">
-        <div class="container">
-          <div class="navbar-header">
 
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#js-navbar-collapse">
-              <span class="sr-only">Toggle navigation</span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-            </button>
-
-            <a class="navbar-brand" href="#/">HSBCNet VA Panel Example SPA</a>
-          </div>
-
-          <div class="collapse navbar-collapse" id="js-navbar-collapse">
-
-            <ul class="nav navbar-nav">
-              <li class="active"><a href="#/">Home</a></li>
-              <li><a ng-href="#/about">About</a></li>
-              <!-- <li>Lang: {{vm.customerLanguage}}</li> -->
-            </ul>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <div class="container">
-    <div ng-view=""></div>
-    </div>
-
-    <div class="footer">
-      <div class="container">
-      </div>
-    </div>
 
 
     <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
@@ -88,6 +178,7 @@
     <script src="../libs/LivePersonVirtualAssistantModule.js"></script>
     <script src="scripts/app.js"></script>
     <script src="scripts/controllers/main.js"></script>
+    <script src="scripts/controllers/home.js"></script>
     <script src="scripts/controllers/about.js"></script>
 </body>
 </html>
