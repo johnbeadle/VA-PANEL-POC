@@ -89,7 +89,7 @@
                 <td>
                   <ul>
                     <li>
-                      <a ng-click="mainCtrl.changeLanguage('es_mx')">Spanish (es)</a>
+                      <a ng-click="mainCtrl.changeLanguage('es_mx')">Spanish (es_mx)</a>
                     </li>
                     <li>
                       <a ng-click="mainCtrl.changeLanguage('en')">English (en)</a>
@@ -134,9 +134,10 @@
               </li>
             </ul>
             <button class="btn btn-warning" ng-click="mainCtrl.askToughQuestion()">Ask Tough Question</button>
-            <HR>
+           
           </div>
-      
+          <HR>
+            <h5>DEBUG area: below ^ ----- DEBUG ONLY</h5>
           <p id="button-container">
             <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="LivePersonVirtualAssistantModule.escalateToChat();">Click to chat</a>
             <a id="lp-va-panel-button-offline" href="#" class="btn btn-warning lp-va-panel-button hide-lp-button">All Agents are OFFLINE/BUSY</a>
