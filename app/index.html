@@ -56,10 +56,18 @@
           </div>
         </div>
         <div class="container">
-          <p>Select your country: 
-            <a class="glyphicon glyphicon-globe" ng-click="mainCtrl.changeCountry('GB')">GB</a> 
-            <a class="glyphicon glyphicon-globe" ng-click="mainCtrl.changeCountry('MX')">MX</a>
+          <p ><i class="glyphicon glyphicon-globe"></i> Select  country & UI mode to emulate:
+            <select name="countrySelect" id="countrySelect" ng-model="mainCtrl.selectedCountry" ng-change="mainCtrl.changeCountry()">
+              <!-- <option value="default">Please Choose a country</option> -->
+              <option ng-repeat="(country,info) in mainCtrl.countryLanguageMappings" value="{{country}}" > {{info.desc}}</option>
+            </select>
           </p>
+          <!-- <p> <BR>
+           
+            <span ng-repeat="(country,info) in mainCtrl.countryLanguageMappings">
+              <a class="glyphicon glyphicon-globe" ng-click="mainCtrl.changeCountry(country)">{{info.desc}}</a> <BR>
+            </span>
+          </p> -->
           <table class="table table-bordered">
             <thead>
               <tr>
@@ -69,7 +77,22 @@
               </tr>
             </thead>
             <tbody>
-              <tr ng-show="mainCtrl.customerCountry == 'GB'">
+              <tr ng-repeat="(country,info) in mainCtrl.countryLanguageMappings" ng-show="mainCtrl.customerCountry == country">
+                <td>
+                  <i class="glyphicon glyphicon-globe"></i> {{mainCtrl.customerCountry}} ({{info.desc}})
+                </td>
+                <td>
+                  <ul>
+                    <li>
+                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage(info.default)">{{info.default}}</a>
+                    </li>
+                    <li ng-repeat="supported_language in info.other">
+                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage(supported_language)">{{supported_language}}</a>
+                    </li>
+                  </ul>
+                </td>
+              </tr>
+              <!-- <tr ng-show="mainCtrl.customerCountry == 'GB'">
                 <td><i class="glyphicon glyphicon-globe"> {{mainCtrl.customerCountry}}</i></td>
                 <td>
                   <ul>
@@ -96,7 +119,7 @@
                     </li>
                   </ul>
                 </td>
-              </tr>
+              </tr> -->
             </tbody>
           </table>
         </div>
@@ -137,7 +160,12 @@
            
           </div>
           <HR>
-            <h5>DEBUG area: below ^ ----- DEBUG ONLY</h5>
+          <h5> ----- DEBUG ONLY ----</h5>
+          <p class="bg-info">
+            {{mainCtrl.debugInfo}}
+          </p>
+          <HR>
+          <p>The area below contains the actual container for the lp button. Depending on which escalation button option is used, this may not be seen by anybody. Included here for reference to show what is actually pushed by LE2. Again this content is controlled in LE2 and may or may not be anything visible. The code of the panel integration responds to the event and button state - not the content itself</p>
           <p id="button-container">
             <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="LivePersonVirtualAssistantModule.escalateToChat();">Click to chat</a>
             <a id="lp-va-panel-button-offline" href="#" class="btn btn-warning lp-va-panel-button hide-lp-button">All Agents are OFFLINE/BUSY</a>

@@ -4,6 +4,7 @@ var LivePersonVirtualAssistantModule = (function () {
     SEND_LAST_QUESTION_ASKED_INTO_CHAT: true, 
     EMBEDDED_BUTTON_ID_LOADED: null,
     EMBEDDED_BUTTON_TYPE: 5,
+    EMBEDDED_BUTTON_INFO: null,
     ENGAGEMENT_NAME_SHORTCODE: ':vap:', // this will used to pattern match against the name of the engagements to also check for button matches for VAP specific engagements. #
     EMBEDDED_BUTTON_IDS: [972162932], // These are the unique button ids within our system that correspond to your CLONE/PROD accounts
     // PLEASE NOTE ^^^ you should NOT need to change the array above - I have preconfigured it with your engagement ids for your clone/prod accounts
@@ -28,10 +29,10 @@ Styling and class names used by the POC - may or may not be relevant to how you 
   var LP_PROXY_BUTTON_OFFLINE_CLASS_NAME = 'lp-va-panel-button-offline';
 
   var BUTTON_STATES = {
-    ONLINE:1,
-    OFFLINE:2,
-    BUSY:4,
-    UNKNOWN:0
+    'ONLINE':1,
+    'OFFLINE':2,
+    'BUSY':4,
+    'UNKNOWN':0
   };
 
   var _eventBindingsDone = false;
@@ -95,12 +96,18 @@ Styling and class names used by the POC - may or may not be relevant to how you 
   function showTheLivePersonButtonInsideVaPanel(eventData) {
     // the hidden empty HTML button inside the va panel has been loaded
     console.log('--> event fired ', _config.VA_PANEL_EVENT_NAMESPACE, '/', _config.VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME, eventData);
+    // cache eventData object
+    _config.EMBEDDED_BUTTON_INFO = eventData;
     // as this could happen many times for button on refresh rates, we should always hide both buttons by default and then reshow the relevant one...
     if (_config.USING_PROXY_BUTTON) {
       hideLivePersonButtonContainers();
       refreshProxyButtonStatus(eventData.state);
     }
 
+  }
+
+  function getActiveButton() {
+    return _config.EMBEDDED_BUTTON_INFO;
   }
 
   function chatWindowIsActive() {
@@ -341,14 +348,21 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     // 4 = busy
     var buttonState = 0;
     if (_config.EMBEDDED_BUTTON_ID_LOADED) {
-      var buttonState = lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_ID_LOADED).state; // use the number you grabbed earlier when the button was loaded inside the panel
-      console.log('--> the button id ', _config.EMBEDDED_BUTTON_ID_LOADED, ' has the state of ', buttonState);
+      var buttonState = lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_INFO.id).state; // use the number you grabbed earlier when the button was loaded inside the panel
+      // var buttonState = lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_ID_LOADED).state; // use the number you grabbed earlier when the button was loaded inside the panel
+      console.log('--> the button id ', _config.EMBEDDED_BUTTON_INFO.id, ' has the state of ', buttonState);
     }
     return buttonState;
   }
 
   function agentsAreAvailable() {
     return checkButtonState() == BUTTON_STATES.ONLINE ? true : false;
+  }
+  function agentsAreBusy() {
+    return checkButtonState() == BUTTON_STATES.BUSY ? true : false;
+  }
+  function agentsAreOffline() {
+    return checkButtonState() == BUTTON_STATES.OFFLINE ? true : false;
   }
 
   function escalateToChat() {
@@ -416,7 +430,10 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     start: lpPanelInit,
     injectButtonContainer: injectLivePersonEmbeddedButtonContainer,
     escalateToChat: escalateToChat,
-    agentsAreAvailable: agentsAreAvailable
+    agentsAreAvailable: agentsAreAvailable,
+    agentsAreBusy: agentsAreBusy,
+    agentsAreOffline: agentsAreOffline,
+    getActiveButton:getActiveButton
   };
 
 })();
