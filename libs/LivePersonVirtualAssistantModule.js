@@ -18,7 +18,8 @@ var LivePersonVirtualAssistantModule = (function () {
     EVENTS : {
       BUTTON_IMPRESSION:'EMBEDDED_BUTTON_IMPRESSION',
       SHOW:'SHOULD_SHOW_VA_PANEL',
-      HIDE:'SHOULD_HIDE_VA_PANEL'
+      HIDE:'SHOULD_HIDE_VA_PANEL',
+      BUTTON_TO_DISPLAY:'SHOULD_SHOW_BUTTON_CONTENT'
     },
     VA_PANEL_CONTAINER_SELECTOR:'#slideout',
     VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS: 'faq-chat-line', // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
@@ -41,6 +42,13 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     'OFFLINE':2,
     'BUSY':4,
     'UNKNOWN':0
+  };
+
+  var BUTTON_STATE_DESCRIPTIONS = {
+    1 : 'ONLINE',
+    2 : 'OFFLINE',
+    4 : 'BUSY',
+    0 : 'UNKNOWN',
   };
 
   var _eventBindingsDone = false;
@@ -92,11 +100,11 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     // because you will be "fake" clicking the actual LivePerson button hidden on the page with no content, you can display your own responsive buttons and HTML and then control the click function, pass the chat lines and trigger the chat start.
     // this section of code just checks the state of the va panel embedded button from LP and allows to choose which one to show
     // this is because the design agreed allows shows the button at the bottom of the panel - there is NOT an escalation button to reveal it
-    if (state === 1) {
+    if (state === BUTTON_STATES.ONLINE) {
       console.log('--> button is online, show that custom button html element which you can control in the panel');
       document.getElementById(LP_PROXY_BUTTON_ONLINE_CLASS_NAME).classList = LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST;
-    } else if (state === 2) {
-      console.log('--> button is offline, show that custom button html element which you can control in the panel');
+    } else if (state === BUTTON_STATES.OFFLINE || state === BUTTON_STATES.BUSY) {
+      console.log('--> button is offline/busy, show that custom button html element which you can control in the panel');
       document.getElementById(LP_PROXY_BUTTON_OFFLINE_CLASS_NAME).classList = LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST;
     }
   }
@@ -110,6 +118,14 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     if (_config.USING_PROXY_BUTTON) {
       hideLivePersonButtonContainers();
       refreshProxyButtonStatus(eventData.state);
+      var buttonStateKeys =  Object.keys(BUTTON_STATES);
+      _triggerEvent(_config.EVENTS.BUTTON_TO_DISPLAY, {
+        'reason': 'VA PANEL related button impression event detected - show the button content on the page based on the attached eventData.state property',
+        'state': eventData.state,
+        'status': BUTTON_STATE_DESCRIPTIONS[eventData.state],
+        'state_descriptions': BUTTON_STATE_DESCRIPTIONS,
+        'state_enums' : BUTTON_STATES
+      });
     }
 
   }
