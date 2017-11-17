@@ -153,6 +153,9 @@ angular.module('HsbcNetSampleApp')
     };
     LivePersonVirtualAssistantModule.start();
 
+    lpTag.events.bind('VA_PANEL', '*', function (eventData, info){
+      console.log('^^^ VA_PANEL event: ',eventData,info);
+    });
 
 
   });

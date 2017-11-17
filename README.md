@@ -1,33 +1,36 @@
-# HSBCNet VA Panel Integration - WIP
+# HSBCNet VA Panel Integration - HSBCNet Version
 
-Under Construction...
+This will document the process and changes specifically for HSBCNet
 
 ## High Level Process Summary
 
 * Website page opens - already tagged with LivePerson code for monitoring etc (via Tealium)
 * VA Panel is loaded onto page
-  + at this point you should bind to all relevant events using `bindToChatEvents()` function as an example
+  + at this call the  `    LivePersonVirtualAssistantModule.start()` function to start the process of event bindings and listeners behind the scenese
 * Visitor Opens VA Panel
-  * Registering the Chat Button Div Container to load the hidden button -- see `function injectLivePersonEmbeddedButtonContainer`
-  * Embedded Chat Button is loaded with online/offline status
-  * VA Panel can show/hide custom HTML content responsive buttons
+  * Registering the Chat Button Div Container to load the hidden button 
+    * call `LivePersonVirtualAssistantModule.injectButtonContainer()`
+  * Embedded Chat Button Events fire and return a status of either ONLINE/BUSY/OFFLINE which is stored by the `LivePersonVirtualAssistantModule`
+  * Depending on the button state, CV VA Panel will show/hide custom HTML content which is responsive to the display of the device (desktop/mobile)
+    * The ONLINE version should include a call to the `LivePersonVirtualAssistantModule.escalateToChat()` function which will begin the chat process if agents are ONLINE
     + e.g. 
     ```html
       <p id="button-container">
-        <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="triggerChatButtonClick();">Click to chat</a>
+        <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="LivePersonVirtualAssistantModule.escalateToChat();">Click to chat</a>
         <a id="lp-va-panel-button-offline" href="#" class="btn btn-warning lp-va-panel-button hide-lp-button">All Agents are OFFLINE/BUSY</a>
       </p>
     ```
     
-* Visitor has conversation with Ask Andrew A.I. and can see the chat button at the bottom of panel
+* Visitor has conversation with CV A.I. FAQ engine and can see the chat button at the bottom of panel
 * If Visit Clicks Chat Button
-  + call custom function to "fake" click the hidden button to start the chat -- see `function triggerChatButtonClick`
-  + inside that custom function, feed in the preChatLines to the chat window -- see `function addPreChatLinesToChat`
-* Listen for Chat Session Started Event to hide VA Panel 
+  + call custom function to "fake" click the hidden button to start the chat -- see `LivePersonVirtualAssistantModule.escalateToChat()`
+  + (optioanl) feed in the preChatLines to the chat window -- see `function addPreChatLinesToChat`
+* CV VA Panel should Listen for Chat Session Started Event to hide VA Panel 
   + see ```lpTag.events.bind("lpUnifiedWindow", "state"...```
-* Listen for Chat Session Ended Event/Exit Survey Submitted Event to re-show VA Panel
+  + see internal method `hideVaPanel()` for how this is done in the POC
+* CV VA Panel should Listen for Chat Session Ended Event/Exit Survey Submitted Event to re-show VA Panel
   + see ```lpTag.events.bind("lpUnifiedWindow","conversationInfo"...```
-
+  + see internal method `showVaPanel()` for how this is done in the POC
 ## Configuration through `_config`
 
 
