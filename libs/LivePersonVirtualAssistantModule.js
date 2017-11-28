@@ -2,6 +2,8 @@ var LivePersonVirtualAssistantModule = (function () {
   var _version = '2.0.0';
   var _config = {
     USING_PROXY_BUTTON: true, // TRUE = CV provide the visible HTML for all button states-  nothing visible will be pushed from LiveEngage. FALSE = no custom HTML from CV =>  This will require an accompanying change on the LE2 admin side to insert the HTML of the button content. NOTE: Any HTML / images hosted need to be made responsive by CV using CSS classes and styles in your own VA Panel code. LiveEngage does NOT support responsive content/images for embedded button types. 
+    TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
+    TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE:false,
     SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES: true, 
     PRECHAT_LINES_INTRO_MESSAGE_ENABLED: true, 
     EMBEDDED_BUTTON_ID_LOADED: null,
@@ -422,17 +424,24 @@ var LivePersonVirtualAssistantModule = (function () {
     return checkButtonState() == BUTTON_STATES.OFFLINE ? true : false;
   }
 
-  function escalateToChat(conversationSoFar) {
+  function startChat(conversationSoFar) {
     var preChatLines = conversationSoFar || [];
     var state = checkButtonState();
     // only trigger the click function if the button is ONLINE
-    if(state != BUTTON_STATES.ONLINE) {
+
+    if( 
+      (state == BUTTON_STATES.BUSY && _config.TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE)
+      ||
+      (state == BUTTON_STATES.OFFLINE && _config.TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE)
+      ||
+      (state == BUTTON_STATES.ONLINE)
+    ) {
+      triggerChatButtonClick(preChatLines);
+    } else {
+      //ToDo trigger event
       return false;
     }
 
-    if(state == BUTTON_STATES.ONLINE) {
-      triggerChatButtonClick(conversationSoFar);
-    } 
   }
 
 
@@ -506,8 +515,8 @@ var LivePersonVirtualAssistantModule = (function () {
     start: _init,
     init: _init,
     injectButtonContainer: injectLivePersonEmbeddedButtonContainer,
-    escalateToChat: escalateToChat,
-    startChat: escalateToChat,
+    escalateToChat: startChat,
+    startChat: startChat,
     agentsAreAvailable: agentsAreAvailable,
     agentsAreBusy: agentsAreBusy,
     agentsAreOffline: agentsAreOffline,
