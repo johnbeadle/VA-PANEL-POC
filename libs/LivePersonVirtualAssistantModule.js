@@ -1,41 +1,52 @@
 var LivePersonVirtualAssistantModule = (function () {
+  var _version = '2.0.0';
   var _config = {
     USING_PROXY_BUTTON: true, // TRUE = CV provide the visible HTML for all button states-  nothing visible will be pushed from LiveEngage. FALSE = no custom HTML from CV =>  This will require an accompanying change on the LE2 admin side to insert the HTML of the button content. NOTE: Any HTML / images hosted need to be made responsive by CV using CSS classes and styles in your own VA Panel code. LiveEngage does NOT support responsive content/images for embedded button types. 
-    SEND_LAST_QUESTION_ASKED_INTO_CHAT: true, 
+    SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES: true, 
+    PRECHAT_LINES_INTRO_MESSAGE_ENABLED: true, 
     EMBEDDED_BUTTON_ID_LOADED: null,
     EMBEDDED_BUTTON_TYPE: 5,
     EMBEDDED_BUTTON_INFO: null,
     ENGAGEMENT_NAME_SHORTCODE: ':vap:', // this will used to pattern match against the name of the engagements to also check for button matches for VAP specific engagements. #
-    EMBEDDED_BUTTON_IDS: [972162932], // These are the unique button ids within our system that correspond to your CLONE/PROD accounts
-    // PLEASE NOTE ^^^ you should NOT need to change the array above - I have preconfigured it with your engagement ids for your clone/prod accounts
     EMBEDDED_BUTTON_DIV_CONTAINER_ID: 'lpButtonDiv-need-help-panel',
     WINDOW_CLOSE_BUTTON_CLASS:'lp_close',
-    // VA_PANEL_EVENT_NAMESPACE: 'VA_PANEL',
-    // VA_PANEL_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME: 'EMBEDDED_BUTTON_IMPRESSION',
-    // VA_PANEL_SHOW_EVENT_NAME: 'SHOW_VA_PANEL',
-    // VA_PANEL_HIDE_EVENT_NAME: 'HIDE_VA_PANEL',
-    EVENT_NAMESPACE : 'VA_PANEL',
+    EVENT_NAMESPACE : 'LP_VA_PANEL_MODULE',
     EVENTS : {
       BUTTON_IMPRESSION:'EMBEDDED_BUTTON_IMPRESSION',
       SHOW:'SHOULD_SHOW_VA_PANEL',
       HIDE:'SHOULD_HIDE_VA_PANEL',
-      BUTTON_TO_DISPLAY:'SHOULD_SHOW_BUTTON_CONTENT'
-    },
-    VA_PANEL_CONTAINER_SELECTOR:'#slideout',
-    VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS: 'faq-chat-line', // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
-    VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_INTRO: 'Your conversation history so far...', //replace with your own message if needed else set to blank or remove this code from the function
-    VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_TAGLINE: 'An agent will be with your shortly to continue the discussion...' //replace with your own message if needed else set to blank or remove this code from the function
+      BUTTON_TO_DISPLAY:'SHOULD_SHOW_BUTTON_CONTENT',
+      CLOSE_THANKYOU_WINDOW:'DID_CLOSE_THANKYOU_WINDOW'
+    }
+    // VA_PANEL_CONTAINER_SELECTOR:'#slideout',
+    // VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS: 'faq-chat-line', // replace with whatever class/logic you might use to get the last question/ chat lines. I suspect it will be completely different with the actual AskAndrew and you will call an API to get that data. this is just POC.
+    // VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_TAGLINE: 'An agent will be with your shortly to continue the discussion...' //replace with your own message if needed else set to blank or remove this code from the function
+  };
+
+  var _supportedLanguages = ['en','fr','zh_hans','zh_hant','ar','bm','es','es_mx'];
+  var _abandonedChatEvents = ['waiting','preChat','chatting','postChat'];
+  var _translations = {
+    'intro' : {
+      'en':'en - Your conversation history so far...',
+      'fr':'fr - Your conversation history so far...',
+      'zh_hans':'zh_hans - Your conversation history so far...',
+      'zh_hant':'zh_hant - Your conversation history so far...',
+      'ar':'ar - Your conversation history so far...',
+      'bm':'bm - Your conversation history so far...',
+      'es':'es - Your conversation history so far...',
+      'es_mx':'es_mx - Your conversation history so far...'
+    }
   };
   /*
 Styling and class names used by the POC - may or may not be relevant to how you choose to handle showing or hiding the content 
  */
-  var LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS = 'lp-va-panel-button';
-  var LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST = 'btn btn-success ' + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
-  var LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST = 'btn btn-warning ' + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
-  var LP_HIDDEN_BUTTON_CLASS_NAME_LIST = 'btn btn-success hide-lp-button ' + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
-  var VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS = 'faq-chat-line';
-  var LP_PROXY_BUTTON_ONLINE_CLASS_NAME = 'lp-va-panel-button-online';
-  var LP_PROXY_BUTTON_OFFLINE_CLASS_NAME = 'lp-va-panel-button-offline';
+  // var LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS = 'lp-va-panel-button';
+  // var LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST = 'btn btn-success ' + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
+  // var LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST = 'btn btn-warning ' + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
+  // var LP_HIDDEN_BUTTON_CLASS_NAME_LIST = 'btn btn-success hide-lp-button ' + LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS;
+  // var VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS = 'faq-chat-line';
+  // var LP_PROXY_BUTTON_ONLINE_CLASS_NAME = 'lp-va-panel-button-online';
+  // var LP_PROXY_BUTTON_OFFLINE_CLASS_NAME = 'lp-va-panel-button-offline';
 
   var BUTTON_STATES = {
     'ONLINE':1,
@@ -53,7 +64,9 @@ Styling and class names used by the POC - may or may not be relevant to how you 
 
   var _eventBindingsDone = false;
 
+  function _log() {
 
+  }
   function checkIfButtonImpressionIsForVaPanel(e, d) {
     // console.log('--> checkIfButtonImpressionIsForVaPanel // ', e.state, e.engagementId,e.engagementName);
     
@@ -66,10 +79,9 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     // check if the type is embedded (5) AND the id matches the array constant of all ids on both accounts DEV/PROD
     // .match(/:vap:/g);
     var _regexCheckEngagementName = new RegExp(_config.ENGAGEMENT_NAME_SHORTCODE,'g');
-    if (e.engagementType == _config.EMBEDDED_BUTTON_TYPE && ( _config.EMBEDDED_BUTTON_IDS.indexOf(e.engagementId) > -1 || _regexCheckEngagementName.test(e.engagementName) ) )
+    if (e.engagementType == _config.EMBEDDED_BUTTON_TYPE && _regexCheckEngagementName.test(e.engagementName) )
     {
       // means embedded button and the unique id the button matches the specific buttons we have configured with the LE2 system to be shown within the VA panel
-      // LP_VA_PANEL_EMBEDDED_BUTTON_IDS[] array contains the expected/allowed values
       _config.EMBEDDED_BUTTON_ID_LOADED = e.engagementId; // store the value so we can use it later when we need to query the button state later in the process for an accurate value - this is in case the refresh timer has changed the state from online/offline and vice versa
       console.log('--> *** // passed validation -> is a VA Panel related engagement => ', e.state, e.engagementId,e.engagementName);
       
@@ -85,39 +97,39 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     }
   }
 
-  function hideLivePersonButtonContainers() {
-    // ...check the state to determine which custom HTML code for our own button should be shown?
-    var lpButtons = document.getElementsByClassName(LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS);
-    // console.log('--> hiding buttons // ', lpButtons);
-    for (var i = 0; i < lpButtons.length; i++) {
-      var lpButton = lpButtons[i];
-      lpButton.className = LP_HIDDEN_BUTTON_CLASS_NAME_LIST; // apply static list of class names to hide the button -- replace with however you choose to do this in the panel
-    }
-  }
+  // function hideLivePersonButtonContainers() {
+  //   // ...check the state to determine which custom HTML code for our own button should be shown?
+  //   var lpButtons = document.getElementsByClassName(LP_EXAMPLE_VA_PANEL_CSS_CLASS_NAME_FOR_MARKING_ELEMENTS);
+  //   // console.log('--> hiding buttons // ', lpButtons);
+  //   for (var i = 0; i < lpButtons.length; i++) {
+  //     var lpButton = lpButtons[i];
+  //     lpButton.className = LP_HIDDEN_BUTTON_CLASS_NAME_LIST; // apply static list of class names to hide the button -- replace with however you choose to do this in the panel
+  //   }
+  // }
 
-  function refreshProxyButtonStatus(state) {
-    // this demos how you can control the content of both the online and offline button HTML elements
-    // because you will be "fake" clicking the actual LivePerson button hidden on the page with no content, you can display your own responsive buttons and HTML and then control the click function, pass the chat lines and trigger the chat start.
-    // this section of code just checks the state of the va panel embedded button from LP and allows to choose which one to show
-    // this is because the design agreed allows shows the button at the bottom of the panel - there is NOT an escalation button to reveal it
-    if (state === BUTTON_STATES.ONLINE) {
-      console.log('--> button is online, show that custom button html element which you can control in the panel');
-      document.getElementById(LP_PROXY_BUTTON_ONLINE_CLASS_NAME).classList = LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST;
-    } else if (state === BUTTON_STATES.OFFLINE || state === BUTTON_STATES.BUSY) {
-      console.log('--> button is offline/busy, show that custom button html element which you can control in the panel');
-      document.getElementById(LP_PROXY_BUTTON_OFFLINE_CLASS_NAME).classList = LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST;
-    }
-  }
+  // function refreshProxyButtonStatus(state) {
+  //   // this demos how you can control the content of both the online and offline button HTML elements
+  //   // because you will be "fake" clicking the actual LivePerson button hidden on the page with no content, you can display your own responsive buttons and HTML and then control the click function, pass the chat lines and trigger the chat start.
+  //   // this section of code just checks the state of the va panel embedded button from LP and allows to choose which one to show
+  //   // this is because the design agreed allows shows the button at the bottom of the panel - there is NOT an escalation button to reveal it
+  //   // if (state === BUTTON_STATES.ONLINE) {
+  //   //   console.log('--> button is online, show that custom button html element which you can control in the panel');
+  //   //   document.getElementById(LP_PROXY_BUTTON_ONLINE_CLASS_NAME).classList = LP_VISIBLE_ONLINE_BUTTON_CLASS_NAME_LIST;
+  //   // } else if (state === BUTTON_STATES.OFFLINE || state === BUTTON_STATES.BUSY) {
+  //   //   console.log('--> button is offline/busy, show that custom button html element which you can control in the panel');
+  //   //   document.getElementById(LP_PROXY_BUTTON_OFFLINE_CLASS_NAME).classList = LP_VISIBLE_OFFLINE_BUTTON_CLASS_NAME_LIST;
+  //   // }
+  // }
 
   function showTheLivePersonButtonInsideVaPanel(eventData) {
     // the hidden empty HTML button inside the va panel has been loaded
-    console.log('--> event fired ', _config.EVENT_NAMESPACE, '/', _config.EVENTS.BUTTON_IMPRESSION, eventData);
+    console.log('LivePerson --> event fired ', _config.EVENT_NAMESPACE, '/', _config.EVENTS.BUTTON_IMPRESSION, eventData);
     // cache eventData object
     _config.EMBEDDED_BUTTON_INFO = eventData;
     // as this could happen many times for button on refresh rates, we should always hide both buttons by default and then reshow the relevant one...
     if (_config.USING_PROXY_BUTTON) {
-      hideLivePersonButtonContainers();
-      refreshProxyButtonStatus(eventData.state);
+      // hideLivePersonButtonContainers();
+      // refreshProxyButtonStatus(eventData.state);
       var buttonStateKeys =  Object.keys(BUTTON_STATES);
       _triggerEvent(_config.EVENTS.BUTTON_TO_DISPLAY, {
         'reason': 'VA PANEL related button impression event detected - show the button content on the page based on the attached eventData.state property',
@@ -160,7 +172,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
         _triggerEvent(_config.EVENTS.HIDE,{
           'reason':'hiding because chatWindowIsActive returned TRUE'
         });
-        hideVaPanel();
+        // hideVaPanel();
       }
     }
     //still call bindToChatEvents so we listen for other events that may still fire.
@@ -179,8 +191,21 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     var lpChatWindowEvents = lpTag.events.hasFired('lpUnifiedWindow', 'conversationInfo');
     console.log('-> chat window events when clicking close button', lpChatWindowEvents);
 
-    var lastEvent = lpChatWindowEvents.pop();
-    if (lastEvent.data.state == 'preChat' || lastEvent.data.state == 'waiting' || lastEvent.data.state == 'postChat') {
+    var lastEvent = lpChatWindowEvents[lpChatWindowEvents.length-1];
+    var previousEvent = lpChatWindowEvents[lpChatWindowEvents.length - 2] || null;
+    console.log('-> previousEvent / lastEvent ', previousEvent,lastEvent);
+
+    /* 
+      lastEvent == preChat/waiting/chatting/postChat => showPanel
+      lastEvent == ended AND previousEvent = preChat/waiting/chatting/ => showPanel + closeThankyouWindow
+
+      lastEvent.data.state == 'preChat' || lastEvent.data.state == 'waiting' || lastEvent.data.state == 'chatting' || lastEvent.data.state == 'postChat'
+    */
+
+    if (  lastEvent.data.state 
+        && 
+        _abandonedChatEvents.indexOf(lastEvent.data.state) > -1  
+    ) {
       // visitor abandonded without submitted survey or connecting to agent...show panel
       console.log('-> LivePerson checkWindowStatus:: lastEvent ', lastEvent.data.state);
       console.log('-> LivePerson checkWindowStatus:: visitor abandonded without submitting prechat survey / or connecting to agent / or did not submit post chat survey...show panel');
@@ -188,8 +213,27 @@ Styling and class names used by the POC - may or may not be relevant to how you 
         'reason': 'visitor abandonded without submitting prechat survey / or connecting to agent / or did not submit post chat survey...show panel',
         'lastEvent' : lastEvent 
       });
-      showVaPanel();
+      // showVaPanel();
     }
+    if( lastEvent.data.state 
+        &&
+        lastEvent.data.state == 'ended'
+        && 
+        previousEvent.data.state
+        && 
+        _abandonedChatEvents.indexOf(previousEvent.data.state) > -1 
+    ) {
+      console.log('-> LivePerson checkWindowStatus:: lastEvent ', lastEvent.data.state);
+      console.log('-> LivePerson checkWindowStatus:: previousEvent ', previousEvent.data.state);
+      console.log('-> LivePerson checkWindowStatus:: lastEvent == ended AND previousEvent = preChat/waiting/chatting/ => showPanel + closeThankyouWindow');
+      _triggerEvent(_config.EVENTS.SHOW, {
+        'reason': 'lastEvent == ended AND previousEvent = preChat/waiting/chatting/ => showPanel + closeThankyouWindow',
+        'lastEvent': lastEvent,
+        'previousEvent':previousEvent
+      });
+      closeThankyouWindow();
+    }
+
     if(lastEvent.data.state == 'postChat') {
       console.log('-> LivePerson checkWindowStatus:: closeThankyouWindow ', lastEvent.data.state);
       
@@ -212,7 +256,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
               _triggerEvent(_config.EVENTS.SHOW, {
                 'reason': 'no surveyData so closing thank you window and showing panel'
               });
-              showVaPanel();
+              // showVaPanel();
               closeThankyouWindow();
             }
 
@@ -221,7 +265,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
               _triggerEvent(_config.EVENTS.SHOW, {
                 'reason': 'BEFORE_SUBMIT_SURVEY//postChatSurvey -->  closing thank you window and showing panel '
               });
-              showVaPanel();
+              // showVaPanel();
               closeThankyouWindow();
             }
             return options;
@@ -252,7 +296,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
           _triggerEvent(_config.EVENTS.HIDE, {
             'reason': 'lpUnifiedWindow State = '+e.state
           });
-          hideVaPanel();
+          // hideVaPanel();
         }
       });
 
@@ -285,10 +329,9 @@ Styling and class names used by the POC - may or may not be relevant to how you 
           _triggerEvent(_config.EVENTS.SHOW, {
             'reason': 'lpUnifiedWindow conversationInfo  ' + eventData.state + ' event fired = post chat survey has been submitted'
           });
-          showVaPanel();
+          // showVaPanel();
         }
-        // NOTE: if the chat configuration of the LivePerson Campaign does NOT have an exit survey attached, this event will NOT fire
-        // Instead you should trigger this code on the "ended" event instead.
+
         if (eventData.state == 'ended') {
           checkWindowStatus();
         }
@@ -304,44 +347,86 @@ Styling and class names used by the POC - may or may not be relevant to how you 
 
   }
 
-  function triggerChatButtonClick() {
+  function triggerChatButtonClick(faqHistorySoFar) {
     console.log('LivePerson --> triggerChatButtonClick ... this function will grab the FAQ conversation lines and feed them to the chat window and then click the hidden button using the rendererStub API');
     // DOCS: https://developers.liveperson.com/trigger-click.html
     var clicked;
 
     if (lpTag && lpTag.taglets && lpTag.taglets.rendererStub) {
-      if (_config.SEND_LAST_QUESTION_ASKED_INTO_CHAT) {
+      if (_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar.length > 0) {
+        console.log('LivePerson --> _config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar ', _config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES,faqHistorySoFar);
         // grab FAQ lines...this POC just gets the HTML content from specific class elements...you will use your own API and functions to get this information from the chat in progress.
-        var preChatLinesArray = addPreChatLinesToChat();
+        // var preChatLinesArray = addPreChatLinesToChat();
+        var preChatLinesIntroMessages = getPreChatLinesIntroMessages();
+        var preChatLinesArray = [];
+        if(preChatLinesIntroMessages) {
+          preChatLinesArray.push(preChatLinesIntroMessages);
+        } else if (preChatLinesIntroMessages === false) {
+          // we could not find a cart item which matched a supported language in our translation list, therefore we do not have any intro messages to add to the conversation
+          console.log('--> LivePerson : we could not find a cart item which matched a supported language in our translation list for intro messages = none added!');
+        }
+        preChatLinesArray = preChatLinesArray.concat(faqHistorySoFar);
+        // if preChatLinesContent.length > 0 then we have been supplied with faq history so far.
+        console.log('--> LivePerson // preChatLinesArray => ',preChatLinesArray);
         // UPDATE : DO NOT SEND preChatLines if empty! otherwise this will cause the 400 bad request error in the chat window
         if (preChatLinesArray.length > 0) {
-          clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_ID_LOADED, {
+          clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_INFO.id, {
             preChatLines: preChatLinesArray
           });
         } else {
-          clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_ID_LOADED); // this will open the chat window
+          clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_INFO.id); // this will open the chat window
         }
 
       } else {
-        clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_ID_LOADED); // this will open the chat window
+        clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_INFO.id); // this will open the chat window
       }
 
     }
   }
 
-  function addPreChatLinesToChat() {
-    // replace logic with however you get the last question/chat history from AskAndrew session and return an array of strings to feed into the chat window.
-    var faqLines = document.getElementsByClassName(_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_CLASS);
-    var preChatLinesArray = [_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_INTRO]; // add a message to give context to the chat lines
-    for (var f = 0; f < faqLines.length; f++) {
-      var faqChatLine = faqLines[f].innerHTML;
-      preChatLinesArray.push(faqChatLine);
-    }
-    preChatLinesArray.push(_config.VIRTUAL_ASSISTANT_CONVERSATION_CHAT_LINES_TAGLINE); // add a message at the end to tell the customer what will happen next
-    console.log('LivePerson :: --> preChatLinesArray : ', preChatLinesArray);
+  function getCurrentCountrySelection(){
 
-    return preChatLinesArray;
   }
+
+  function isSupportedLanguage(lang) {
+    var supportedLanguage = false;
+    if(_supportedLanguages.indexOf(lang) > -1) {
+      supportedLanguage = true;
+    }
+    return supportedLanguage;
+  }
+
+  function getCurrentLanguageSelection(){
+    var cartItems = lpTag.sdes.get('cart')[0] || false;
+    var foundSupportedLanguage = false;
+    var currentLanguageSelection = null;
+    if(cartItems && cartItems.products && cartItems.products.length) {
+      for (let i = 0; i < cartItems.products.length; i++) {
+        const possibleLanguageSelection = cartItems.products[i].product.name || null;
+        if(isSupportedLanguage(possibleLanguageSelection)) {
+          currentLanguageSelection = possibleLanguageSelection;
+          foundSupportedLanguage = true;
+          break;
+        }
+      }
+    }
+    return currentLanguageSelection;
+  }
+
+  function getPreChatLinesIntroTranslation() {
+    var language = getCurrentLanguageSelection();
+    if(language) {
+      return _translations.intro[language];
+    } else {
+      return false;
+    }
+  }
+
+  function getPreChatLinesIntroMessages() {
+    var preChatLinesIntroMessages = getPreChatLinesIntroTranslation();
+    return preChatLinesIntroMessages || false;
+  }
+
 
   function closeThankyouWindow() {
     var closeBtn = document.querySelector('.lp_close'); // this is the class of the close button
@@ -350,7 +435,9 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     if (closeBtn) {
       closeBtn.click();
       console.log('--> LivePerson :: auto closing the thank you screen');
-
+      _triggerEvent(_config.EVENTS.CLOSE_THANKYOU_WINDOW, {
+        'info': 'attempted to close thank you window'
+      });
     }
   }
 
@@ -378,7 +465,8 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     return checkButtonState() == BUTTON_STATES.OFFLINE ? true : false;
   }
 
-  function escalateToChat() {
+  function escalateToChat(conversationSoFar) {
+    var preChatLines = conversationSoFar || [];
     var state = checkButtonState();
     // only trigger the click function if the button is ONLINE
     if(state != BUTTON_STATES.ONLINE) {
@@ -386,7 +474,7 @@ Styling and class names used by the POC - may or may not be relevant to how you 
     }
 
     if(state == BUTTON_STATES.ONLINE) {
-      triggerChatButtonClick();
+      triggerChatButtonClick(conversationSoFar);
     } 
   }
 
@@ -421,20 +509,20 @@ Styling and class names used by the POC - may or may not be relevant to how you 
   }
 
 
-  function togglePanel(selector) {
-    _toggleClass(selector || _config.VA_PANEL_CONTAINER_SELECTOR, 'on');
-  }
-  function hideVaPanel(panelIdSelector,helpBtnIdSelector) {
-    // This now allows 2 selectors to be passed in - thus giving the option to override the selectors used to find the panel and help button if required
-    console.log('--> LivePerson Chat window is open ... hiding NEED HELP panel and button...');
-    _removeClass(panelIdSelector || _config.VA_PANEL_CONTAINER_SELECTOR,'on');
-    document.querySelector(helpBtnIdSelector || '#need-help').style.display = 'none';
-  }
+  // function togglePanel(selector) {
+  //   _toggleClass(selector || _config.VA_PANEL_CONTAINER_SELECTOR, 'on');
+  // }
+  // function hideVaPanel(panelIdSelector,helpBtnIdSelector) {
+  //   // This now allows 2 selectors to be passed in - thus giving the option to override the selectors used to find the panel and help button if required
+  //   console.log('--> LivePerson Chat window is open ... hiding NEED HELP panel and button...');
+  //   _removeClass(panelIdSelector || _config.VA_PANEL_CONTAINER_SELECTOR,'on');
+  //   document.querySelector(helpBtnIdSelector || '#need-help').style.display = 'none';
+  // }
 
-  function showVaPanel(helpBtnIdSelector) {
-    console.log('--> LivePerson Chat session has ended ... bringing back NEED HELP button...');
-    document.querySelector(helpBtnIdSelector || '#need-help').style.display = '';
-  }
+  // function showVaPanel(helpBtnIdSelector) {
+  //   console.log('--> LivePerson Chat session has ended ... bringing back NEED HELP button...');
+  //   document.querySelector(helpBtnIdSelector || '#need-help').style.display = '';
+  // }
 
   function injectLivePersonEmbeddedButtonContainer() {
     /* 
@@ -473,9 +561,12 @@ Styling and class names used by the POC - may or may not be relevant to how you 
   // private functions and properties
 
   return {
+    version:_version,
     start: _init,
+    init: _init,
     injectButtonContainer: injectLivePersonEmbeddedButtonContainer,
     escalateToChat: escalateToChat,
+    startChat: escalateToChat,
     agentsAreAvailable: agentsAreAvailable,
     agentsAreBusy: agentsAreBusy,
     agentsAreOffline: agentsAreOffline,
