@@ -126,7 +126,7 @@
       </div>
       
       <div ng-view class="container-fluid"></div>
-      <div id="slideout">
+      <div id="slideout" >
         <p class="btn btn-primary need-help vertical-text" id="need-help" ng-click="mainCtrl.togglePanel()">Need Help?</p>
         <form>
           <h4 class="display1">FAQ converstion goes here...</h4>
@@ -137,27 +137,30 @@
                 <b>Customer:</b> Hello</li>
               <li class="list-group-item faq-chat-line">
                 <b>Virtual Assistant:</b> How can I help you?</li>
-              <li class="list-group-item faq-chat-line alert-warning" ng-if="mainCtrl.customerAskedToughQuestion === true">
+              <li class="list-group-item faq-chat-line alert-warning">
                 <b>Customer:</b> I cannot login</li>
-              <li class="list-group-item faq-chat-line" ng-if="mainCtrl.agentsAvailable === true">
+              <li class="list-group-item faq-chat-line">
                 <b>Virtual Assistant:</b> Sorry I cannot answer that question for you...
                 <br> would you like to speak with an agent?
                 <BR>
-                <p ng-click="mainCtrl.escalateToChat()">
+                <!-- <p ng-click="mainCtrl.escalateToChat()">
                   <strong>
                     <u>Yes</u>
                   </strong>
                 </p>
-                <p>No</p>
+                <p>No</p> -->
               </li>
-              <li class="list-group-item faq-chat-line" ng-if="mainCtrl.agentsAvailable === false">
+              <!-- <li class="list-group-item faq-chat-line" ng-if="mainCtrl.agentsAvailable === false">
                 <b>Virtual Assistant:</b> Sorry I cannot answer that question for you...
                 <BR>
                 <p>(agents are offline so no escalate to chat option shown!)</p>
-              </li>
+              </li> -->
             </ul>
-            <button class="btn btn-warning" ng-click="mainCtrl.askToughQuestion()">Ask Tough Question</button>
-           
+            <!-- <button class="btn btn-warning" ng-click="mainCtrl.askToughQuestion()">Ask Tough Question</button> -->
+            <button class="btn btn-success" ng-click="mainCtrl.escalateToChat()" ng-if="mainCtrl.buttonState === 'ONLINE'">Start a LiveChat</button>
+            <button class="btn btn-warning" ng-if="mainCtrl.buttonState === 'BUSY'">Agents are Busy - try again</button>
+            <button class="btn btn-danger" ng-if="mainCtrl.buttonStat2 === 'OFFLINE'">Agents are offline </button>
+            
           </div>
           <HR>
           <h5> ----- DEBUG ONLY ----</h5>
