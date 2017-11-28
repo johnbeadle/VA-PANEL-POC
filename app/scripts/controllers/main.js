@@ -15,78 +15,81 @@ angular.module('HsbcNetSampleApp')
       'Karma'
     ];
     var vm = this;
-    
+    vm.agentsAvailable = false;
+    vm.agentsBusy = false;
+    vm.agentsOffline = false;
+
     vm.customerAskedToughQuestion = false;
     var defaultLanguage = 'en_uk';
     var defaultCountry = 'GB';
     
     vm.debugInfo = 'Once a button has loaded we will show its details here for debug...';
     vm.countryLanguageMappings = {
-      'GB' : {
-        'desc' : ' UK Heritage',
-        'default' : 'en',
-        'other' : []
-      },
+      // 'GB' : {
+      //   'desc' : ' UK Heritage',
+      //   'default' : 'en',
+      //   'other' : []
+      // },
       'nuGB' : {
         'desc' : ' UK NewUI',
         'default' : 'en',
         'other' : []
       },
-      'MX' : {
-        'desc' : ' Mexico Heritage',
-        'default' : 'es_mx',
-        'other' : ['en']
-      },
+      // 'MX' : {
+      //   'desc' : ' Mexico Heritage',
+      //   'default' : 'es_mx',
+      //   'other' : ['en']
+      // },
       'nuMX' : {
         'desc' : ' Mexico NewUI',
         'default' : 'es_mx',
         'other' : ['en']
       },
-      'US' : {
-        'desc' : ' USA Heritage',
-        'default' : 'en_us',
-        'other' : ['en']
-      },
+      // 'US' : {
+      //   'desc' : ' USA Heritage',
+      //   'default' : 'en_us',
+      //   'other' : ['en']
+      // },
       'nuUS' : {
         'desc' : ' USA NewUI',
         'default' : 'en_us',
         'other' : ['en']
       },
-      'CA' : {
-        'desc' : ' Canada Heritage',
-        'default' : 'fr',
-        'other': ['en', 'en_us']
-      },
+      // 'CA' : {
+      //   'desc' : ' Canada Heritage',
+      //   'default' : 'fr',
+      //   'other': ['en', 'en_us']
+      // },
       'nuCA' : {
         'desc' : ' Canada NewUI',
         'default' : 'fr',
         'other' : ['en','en_us']
       },
-      'HK' : {
-        'desc' : ' Hong Kong Heritage',
-        'default' : 'en',
-        'other': ['zh_hans','zh_hant']
-      },
+      // 'HK' : {
+      //   'desc' : ' Hong Kong Heritage',
+      //   'default' : 'en',
+      //   'other': ['zh_hans','zh_hant']
+      // },
       'nuHK' : {
         'desc' : ' Hong Kong NewUI',
         'default' : 'en',
         'other': ['zh_hans', 'zh_hant']
       },
-      'CH' : {
-        'desc' : ' China Heritage',
-        'default' : 'zh_hans',
-        'other': ['en', 'zh_hant']
-      },
+      // 'CH' : {
+      //   'desc' : ' China Heritage',
+      //   'default' : 'zh_hans',
+      //   'other': ['en', 'zh_hant']
+      // },
       'nuCH' : {
         'desc' : ' China NewUI',
         'default': 'zh_hans',
         'other': ['en', 'zh_hant']
       },
-      'MO' : {
-        'desc' : ' Macau Heritage',
-        'default': 'zh_hant',
-        'other': ['en', 'zh_hant']
-      },
+      // 'MO' : {
+      //   'desc' : ' Macau Heritage',
+      //   'default': 'zh_hant',
+      //   'other': ['en', 'zh_hant']
+      // },
       'nuMO' : {
         'desc': ' Macau NewUI',
         'default': 'zh_hant',
@@ -140,7 +143,9 @@ angular.module('HsbcNetSampleApp')
     };
 
     vm.escalateToChat = function() {
-      LivePersonVirtualAssistantModule.escalateToChat();
+      // this example shows passing a fake array of strings to represent the conversation history so far...
+      // these messages will be added to the conversation heading in the LE2 chat window for context.
+      LivePersonVirtualAssistantModule.startChat(['Visitor: I need help with my password','VAP: Sorry I cannot help with that...suggest you speak to an agent...']);
     };
 
     vm.checkIfAgentsAreAvailable = function() {
@@ -151,10 +156,29 @@ angular.module('HsbcNetSampleApp')
       vm.agentsAvailable = vm.checkIfAgentsAreAvailable();
       vm.customerAskedToughQuestion = true;
     };
-    LivePersonVirtualAssistantModule.start();
 
-    lpTag.events.bind('VA_PANEL', '*', function (eventData, info){
-      console.log('^^^ VA_PANEL event: ',eventData,info);
+    vm.refreshButtonContent = function(buttonInfo) {
+      console.log('// main.js // refreshButtonContent => ',buttonInfo);
+      vm.buttonState = buttonInfo.status;
+      $scope.$apply();
+    };
+
+    LivePersonVirtualAssistantModule.init(); // must be called every time the VA panel is loaded -regardless of visibility or status to ensure events are bound and listened for correctly with the lpTag window that may be on the page
+
+    lpTag.events.bind('LP_VA_PANEL_MODULE', '*', function (eventData, info){
+      console.log('! LP_VA_PANEL_MODULE // ',info.eventName);
+      if(info.eventName == 'SHOULD_SHOW_BUTTON_CONTENT') {
+        vm.refreshButtonContent(eventData);
+        // put code here to show/hide the relevant live chat button HTML within the VA panel as required based on the button status online/offline/busy etc...
+      }
+      if (info.eventName == 'SHOULD_SHOW_VA_PANEL') {
+        // code goes here to show the panel again
+        $('#slideout').show();
+      }
+      if (info.eventName == 'SHOULD_HIDE_VA_PANEL') {
+        // code goes here to HIDE the panel 
+        $('#slideout').hide();
+      }
     });
 
 
