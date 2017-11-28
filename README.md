@@ -73,6 +73,22 @@ The following events are of interest to the VA Panel and should be subscribed to
   + `eventData.state` = `0` | `1` | `2` | `4`
   + `eventData.reason` = description why the event was shown
 
+## _"How do I start a chat from my custom HTML content?_
+
++ Once you have displayed some HTML content for the various button states, you must ensure the `ONLINE` state includes a click event which calls the following function:
+
+```LivePersonVirtualAssistantModule.startChat()```
+
++ At this point you have the option of passing in an array `[]` of strings to represent the conversation history so far between the consumer and the FAQ engine.
++ e.g.
+
+```js
+var messages = ['visitor: I am stuck with password issues!','FAQ: try this article...http://www.hsbc.co.uk/password'];
+// startChat
+LivePersonVirtualAssistantModule.startChat(messages); // passes the messages as preChatLines into the chat window.
+```
+
++ **NOTE:** sending messages to `.startChat` requires the `_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES` option to be set to `true` (default)
 
 ## High Level Process Summary
 
