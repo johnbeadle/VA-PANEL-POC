@@ -208,18 +208,23 @@ var LivePersonVirtualAssistantModule = (function () {
   function _handleBeforeSurveySubmitHook(options) {
     _log('BEFORE_SUBMIT_SURVEY', { 'options': options });
     var reason = null;
-    if (options.data.surveyType == 'preChatSurvey' && options.data.surveyData === null) {
-      reason = 'BEFORE_SUBMIT_SURVEY // preChatSurvey / no surveyData so closing thank you window and showing panel';      
-    }
-    if (options.data.surveyType == 'postChatSurvey') {
-      reason = 'BEFORE_SUBMIT_SURVEY // postChatSurvey / closing thank you window and showing panel';
-    }
-    _triggerEvent(_config.EVENTS.SHOW, {
+    var eventData = {
       'options.data.surveyType': options.data.surveyType,
       'options.data.surveyData': options.data.surveyData,
       'reason': reason
-    });
-    closeThankyouWindow();
+    };
+
+    if (options.data.surveyType == 'preChatSurvey' && options.data.surveyData === null) {
+      eventData.reason = 'BEFORE_SUBMIT_SURVEY // preChatSurvey / no surveyData so closing thank you window and showing panel'; 
+      _triggerEvent(_config.EVENTS.SHOW, eventData);
+      closeThankyouWindow();    
+    }
+    if (options.data.surveyType == 'postChatSurvey') {
+      eventData.reason = 'BEFORE_SUBMIT_SURVEY // postChatSurvey / closing thank you window and showing panel';
+      _triggerEvent(_config.EVENTS.SHOW, eventData);    
+      closeThankyouWindow();
+    }
+    
     return options;
   }
 
