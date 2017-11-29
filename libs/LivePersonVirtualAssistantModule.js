@@ -205,6 +205,24 @@ var LivePersonVirtualAssistantModule = (function () {
     }
   }
 
+  function _handleBeforeSurveySubmitHook(options) {
+    _log('BEFORE_SUBMIT_SURVEY', { 'options': options });
+    var reason = null;
+    if (options.data.surveyType == 'preChatSurvey' && options.data.surveyData === null) {
+      reason = 'BEFORE_SUBMIT_SURVEY // preChatSurvey / no surveyData so closing thank you window and showing panel';      
+    }
+    if (options.data.surveyType == 'postChatSurvey') {
+      reason = 'BEFORE_SUBMIT_SURVEY // postChatSurvey / closing thank you window and showing panel';
+    }
+    _triggerEvent(_config.EVENTS.SHOW, {
+      'options.data.surveyType': options.data.surveyType,
+      'options.data.surveyData': options.data.surveyData,
+      'reason': reason
+    });
+    closeThankyouWindow();
+    return options;
+  }
+
   function addSurveyHooks() {
     var _waitForHooks = setInterval(function () {
       var _waitForHooksCounter = 0;
@@ -212,29 +230,7 @@ var LivePersonVirtualAssistantModule = (function () {
         clearInterval(_waitForHooks);
         lpTag.hooks.push({
           name: 'BEFORE_SUBMIT_SURVEY',
-          callback: function (options) {
-            _log('BEFORE_SUBMIT_SURVEY', { 'options': options });
-
-            if (options.data.surveyType == 'preChatSurvey' && options.data.surveyData === null) {
-              // no prechat survey data = abandoned
-              _triggerEvent(_config.EVENTS.SHOW, {
-                'options.data.surveyType' : options.data.surveyType,
-                'options.data.surveyData' : options.data.surveyData,
-                'reason': 'no surveyData so closing thank you window and showing panel'
-              });
-              closeThankyouWindow();
-            }
-
-            if (options.data.surveyType == 'postChatSurvey') {
-              _triggerEvent(_config.EVENTS.SHOW, {
-                'options.data.surveyType': options.data.surveyType,
-                'options.data.surveyData': options.data.surveyData,
-                'reason': 'BEFORE_SUBMIT_SURVEY//postChatSurvey -->  closing thank you window and showing panel '
-              });
-              closeThankyouWindow();
-            }
-            return options;
-          }
+          callback: _handleBeforeSurveySubmitHook
         });
       } else if (_waitForHooksCounter > 10) {
         _log('clearInterval/_waitForHooksCounter', { '_waitForHooksCounter': _waitForHooksCounter });
