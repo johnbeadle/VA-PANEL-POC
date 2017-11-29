@@ -1,5 +1,5 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.0.0';
+  var _version = '2.0.1';
   var _config = {
     USING_PROXY_BUTTON: true, // TRUE = CV provide the visible HTML for all button states-  nothing visible will be pushed from LiveEngage. FALSE = no custom HTML from CV =>  This will require an accompanying change on the LE2 admin side to insert the HTML of the button content. NOTE: Any HTML / images hosted need to be made responsive by CV using CSS classes and styles in your own VA Panel code. LiveEngage does NOT support responsive content/images for embedded button types. 
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
@@ -12,7 +12,7 @@ var LivePersonVirtualAssistantModule = (function () {
     ENGAGEMENT_NAME_SHORTCODE: ':vap:', // this will used to pattern match against the name of the engagements to also check for button matches for VAP specific engagements. #
     EMBEDDED_BUTTON_DIV_CONTAINER_ID: 'lpButtonDiv-need-help-panel',
     WINDOW_CLOSE_BUTTON_CLASS:'lp_close',
-    EVENT_NAMESPACE : 'LP_VA_PANEL_MODULE',
+    NAMESPACE : 'LP_VA_PANEL_MODULE',
     EVENTS : {
       BUTTON_IMPRESSION:'EMBEDDED_BUTTON_IMPRESSION',
       SHOW:'SHOULD_SHOW_VA_PANEL',
@@ -53,11 +53,16 @@ var LivePersonVirtualAssistantModule = (function () {
 
   var _eventBindingsDone = false;
 
-  function _log() {
+  var _eventLog = [];
 
+  function _log(name,event) {
+    _eventLog.push({
+      'name':name,
+      'info':event,
+      'timestamp':Date.now()
+    });
   }
   function checkIfButtonImpressionIsForVaPanel(e, d) {
-    // console.log('--> checkIfButtonImpressionIsForVaPanel // ', e.state, e.engagementId,e.engagementName);
     
     /* 
      This event fires every time a button is displayed on the page
@@ -72,37 +77,37 @@ var LivePersonVirtualAssistantModule = (function () {
     {
       // means embedded button and the unique id the button matches the specific buttons we have configured with the LE2 system to be shown within the VA panel
       _config.EMBEDDED_BUTTON_ID_LOADED = e.engagementId; // store the value so we can use it later when we need to query the button state later in the process for an accurate value - this is in case the refresh timer has changed the state from online/offline and vice versa
-      console.log('--> *** // passed validation -> is a VA Panel related engagement => ', e.state, e.engagementId,e.engagementName);
       
       // trigger a custom event using the lpTag.events bridge to notify other parts of the code that we have successfull loaded the embedded button for VA panel
-      lpTag.events.trigger(_config.EVENT_NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION, {
+      var eventData = {
         id: e.engagementId,
         name: e.engagementName,
         cid: e.campaignId,
         state: e.state
-      });
+      };
+      lpTag.events.trigger(_config.NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION,eventData);
+      _log(_config.EVENTS.BUTTON_IMPRESSION, eventData);
     } else {
-      console.log('--> button event => ', e.engagementName,e.state, e.engagementId);
     }
   }
 
 
   function showTheLivePersonButtonInsideVaPanel(eventData) {
     // the hidden empty HTML button inside the va panel has been loaded
-    console.log('LivePerson --> event fired ', _config.EVENT_NAMESPACE, '/', _config.EVENTS.BUTTON_IMPRESSION, eventData);
     // cache eventData object
     _config.EMBEDDED_BUTTON_INFO = eventData;
     // as this could happen many times for button on refresh rates, we should always hide both buttons by default and then reshow the relevant one...
     if (_config.USING_PROXY_BUTTON) {
       
       var buttonStateKeys =  Object.keys(BUTTON_STATES);
-      _triggerEvent(_config.EVENTS.BUTTON_TO_DISPLAY, {
+      var data = {
         'reason': 'VA PANEL related button impression event detected - show the button content on the page based on the attached eventData.state property',
         'state': eventData.state,
         'status': BUTTON_STATE_DESCRIPTIONS[eventData.state],
         'state_descriptions': BUTTON_STATE_DESCRIPTIONS,
-        'state_enums' : BUTTON_STATES
-      });
+        'state_enums': BUTTON_STATES
+      };
+      _triggerEvent(_config.EVENTS.BUTTON_TO_DISPLAY, data );
     }
 
   }
@@ -124,11 +129,13 @@ var LivePersonVirtualAssistantModule = (function () {
   }
 
   function _triggerEvent(name,data) {
-    lpTag.events.trigger(_config.EVENT_NAMESPACE, name, data);
+    lpTag.events.trigger(_config.NAMESPACE, name, data);
+    _log(name,data);
   }
 
   function _init() {
     // bind to the window
+    _eventLog = [];
     if (lpTag && lpTag.events && lpTag.events.hasFired) {
       // events.hasFired exists - check if the lpTag window is already on the page before we got here?
       // if we find any events, we should hide the panel
@@ -145,7 +152,7 @@ var LivePersonVirtualAssistantModule = (function () {
       addSurveyHooks();
       _eventBindingsDone = true;      
     } else {
-      console.log('--> LivePerson // -> eventBindings already enabled...skipping');
+      _log('EVENT_BINDINGS_DONE',{'eventBindingsDone':_eventBindingsDone});
     }
 
   }
@@ -153,11 +160,11 @@ var LivePersonVirtualAssistantModule = (function () {
   // workaround for #CMBWSUAT-31
   function checkWindowStatus(element) {
     var lpChatWindowEvents = lpTag.events.hasFired('lpUnifiedWindow', 'conversationInfo');
-    console.log('-> chat window events when clicking close button', lpChatWindowEvents);
+    _log('checkWindowStatus', { 'lpChatWindowEvents': lpChatWindowEvents });
 
     var lastEvent = lpChatWindowEvents[lpChatWindowEvents.length-1];
     var previousEvent = lpChatWindowEvents[lpChatWindowEvents.length - 2] || null;
-    console.log('-> previousEvent / lastEvent ', previousEvent,lastEvent);
+    _log('previousEvent_and_lastEvent', { 'previousEvent': previousEvent,'lastEvent':lastEvent });
 
     /* 
       lastEvent == preChat/waiting/chatting/postChat => showPanel
@@ -171,8 +178,6 @@ var LivePersonVirtualAssistantModule = (function () {
         _abandonedChatEvents.indexOf(lastEvent.data.state) > -1  
     ) {
       // visitor abandonded without submitted survey or connecting to agent...show panel
-      console.log('-> LivePerson checkWindowStatus:: lastEvent ', lastEvent.data.state);
-      console.log('-> LivePerson checkWindowStatus:: visitor abandonded without submitting prechat survey / or connecting to agent / or did not submit post chat survey...show panel');
       _triggerEvent(_config.EVENTS.SHOW, {
         'reason': 'visitor abandonded without submitting prechat survey / or connecting to agent / or did not submit post chat survey...show panel',
         'lastEvent' : lastEvent 
@@ -186,9 +191,6 @@ var LivePersonVirtualAssistantModule = (function () {
         && 
         _abandonedChatEvents.indexOf(previousEvent.data.state) > -1 
     ) {
-      console.log('-> LivePerson checkWindowStatus:: lastEvent ', lastEvent.data.state);
-      console.log('-> LivePerson checkWindowStatus:: previousEvent ', previousEvent.data.state);
-      console.log('-> LivePerson checkWindowStatus:: lastEvent == ended AND previousEvent = preChat/waiting/chatting/ => showPanel + closeThankyouWindow');
       _triggerEvent(_config.EVENTS.SHOW, {
         'reason': 'lastEvent == ended AND previousEvent = preChat/waiting/chatting/ => showPanel + closeThankyouWindow',
         'lastEvent': lastEvent,
@@ -198,7 +200,7 @@ var LivePersonVirtualAssistantModule = (function () {
     }
 
     if(lastEvent.data.state == 'postChat') {
-      console.log('-> LivePerson checkWindowStatus:: closeThankyouWindow ', lastEvent.data.state);
+      _log('closeThankyouWindow', { 'lastEvent': lastEvent});
       closeThankyouWindow();    
     }
   }
@@ -211,19 +213,22 @@ var LivePersonVirtualAssistantModule = (function () {
         lpTag.hooks.push({
           name: 'BEFORE_SUBMIT_SURVEY',
           callback: function (options) {
-            console.log('--> LivePerson :: BEFORE_SUBMIT_SURVEY options ', options, options.data.surveyType);
+            _log('BEFORE_SUBMIT_SURVEY', { 'options': options });
+
             if (options.data.surveyType == 'preChatSurvey' && options.data.surveyData === null) {
               // no prechat survey data = abandoned
-              console.log('--> LivePerson :: BEFORE_SUBMIT_SURVEY//preChatSurvey --> no surveyData so closing thank you window and showing panel ', options, options.data.surveyData);
               _triggerEvent(_config.EVENTS.SHOW, {
+                'options.data.surveyType' : options.data.surveyType,
+                'options.data.surveyData' : options.data.surveyData,
                 'reason': 'no surveyData so closing thank you window and showing panel'
               });
               closeThankyouWindow();
             }
 
             if (options.data.surveyType == 'postChatSurvey') {
-              console.log('--> LivePerson :: BEFORE_SUBMIT_SURVEY//postChatSurvey -->  closing thank you window and showing panel ', options, options.data.surveyData);
               _triggerEvent(_config.EVENTS.SHOW, {
+                'options.data.surveyType': options.data.surveyType,
+                'options.data.surveyData': options.data.surveyData,
                 'reason': 'BEFORE_SUBMIT_SURVEY//postChatSurvey -->  closing thank you window and showing panel '
               });
               closeThankyouWindow();
@@ -232,7 +237,8 @@ var LivePersonVirtualAssistantModule = (function () {
           }
         });
       } else if (_waitForHooksCounter > 10) {
-        console.log('--> LivePerson :: cancelling loop to use lpTag.hooks after 2 seconds trying...survey close events will not capture all use cases as a result!', _waitForHooksCounter);
+        _log('clearInterval/_waitForHooksCounter', { '_waitForHooksCounter': _waitForHooksCounter });
+
         clearInterval(_waitForHooks); // stop looping for hooks after 2 seconds
       }
     }, 200);
@@ -242,7 +248,8 @@ var LivePersonVirtualAssistantModule = (function () {
     
     // make sure the function and objects exist
     if (lpTag && lpTag.events && lpTag.events.bind) {
-      console.log('// -> bindToChatEvents ...');
+      _log('bindToChatEvents', { });
+
       lpTag.events.bind('lpUnifiedWindow', 'state', function (e, d) {
         /* 
         lpUnifiedWindow/state 
@@ -251,9 +258,9 @@ var LivePersonVirtualAssistantModule = (function () {
           init / initialised / waiting / chatting / interactive / resume
        */
 
-        console.log('--> LivePerson Chat Window Event Detected: state == ', e.state);
         if (e.state == 'preChat' || e.state == 'waiting' || e.state == 'resume' || e.state == 'interactive'|| e.state == 'postChat') {
           _triggerEvent(_config.EVENTS.HIDE, {
+            'e.state':e.state,
             'reason': 'lpUnifiedWindow State = '+e.state
           });
         }
@@ -267,7 +274,6 @@ var LivePersonVirtualAssistantModule = (function () {
             postChat: post chat survey shown
             applicationEnded : post chat survey submitted     
        */
-        console.log('--> LivePerson conversationInfo event : ', eventData.state);
 
         // workaround for #CMBWSUAT-31
         // added resume state in case page is ever refreshed, we need to re-add the click event bindings on the X close button!
@@ -283,9 +289,9 @@ var LivePersonVirtualAssistantModule = (function () {
 
         // if the post chat exit survey has been submitted then auto close the thank you window
         if (eventData.state == 'applicationEnded') {
-          console.log('LivePerson --> ', eventData.state, ' event fired means post chat survey has been submitted');
           closeThankyouWindow();
           _triggerEvent(_config.EVENTS.SHOW, {
+            'e.state': e.state,
             'reason': 'lpUnifiedWindow conversationInfo  ' + eventData.state + ' event fired = post chat survey has been submitted'
           });
           // showVaPanel();
@@ -300,20 +306,18 @@ var LivePersonVirtualAssistantModule = (function () {
       lpTag.events.bind('LP_OFFERS', 'OFFER_IMPRESSION', checkIfButtonImpressionIsForVaPanel);
 
       // custom event to react to when other parts of the code detect the button loaded on the page is for the VA Panel
-      lpTag.events.bind(_config.EVENT_NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION, showTheLivePersonButtonInsideVaPanel);
+      lpTag.events.bind(_config.NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION, showTheLivePersonButtonInsideVaPanel);
 
     }
 
   }
 
   function triggerChatButtonClick(faqHistorySoFar) {
-    console.log('LivePerson --> triggerChatButtonClick ... this function will grab the FAQ conversation lines and feed them to the chat window and then click the hidden button using the rendererStub API');
     // DOCS: https://developers.liveperson.com/trigger-click.html
     var clicked;
 
     if (lpTag && lpTag.taglets && lpTag.taglets.rendererStub) {
       if (_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar.length > 0) {
-        console.log('LivePerson --> _config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar ', _config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES,faqHistorySoFar);
         // grab FAQ lines...this POC just gets the HTML content from specific class elements...you will use your own API and functions to get this information from the chat in progress.
         // var preChatLinesArray = addPreChatLinesToChat();
         var preChatLinesIntroMessages = getPreChatLinesIntroMessages();
@@ -322,11 +326,9 @@ var LivePersonVirtualAssistantModule = (function () {
           preChatLinesArray.push(preChatLinesIntroMessages);
         } else if (preChatLinesIntroMessages === false) {
           // we could not find a cart item which matched a supported language in our translation list, therefore we do not have any intro messages to add to the conversation
-          console.log('--> LivePerson : we could not find a cart item which matched a supported language in our translation list for intro messages = none added!');
         }
         preChatLinesArray = preChatLinesArray.concat(faqHistorySoFar);
         // if preChatLinesContent.length > 0 then we have been supplied with faq history so far.
-        console.log('--> LivePerson // preChatLinesArray => ',preChatLinesArray);
         // UPDATE : DO NOT SEND preChatLines if empty! otherwise this will cause the 400 bad request error in the chat window
         if (preChatLinesArray.length > 0) {
           clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_INFO.id, {
@@ -393,7 +395,6 @@ var LivePersonVirtualAssistantModule = (function () {
     // if we find it, click to close the thank you screen
     if (closeBtn) {
       closeBtn.click();
-      console.log('--> LivePerson :: auto closing the thank you screen');
       _triggerEvent(_config.EVENTS.CLOSE_THANKYOU_WINDOW, {
         'info': 'attempted to close thank you window'
       });
@@ -409,7 +410,6 @@ var LivePersonVirtualAssistantModule = (function () {
     var buttonState = 0;
     if (_config.EMBEDDED_BUTTON_INFO && _config.EMBEDDED_BUTTON_INFO.id) {
       var buttonState = lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_INFO.id).state; // use the number you grabbed earlier when the button was loaded inside the panel
-      console.log('--> the button id ', _config.EMBEDDED_BUTTON_INFO.id, ' has the state of ', buttonState);
     }
     return buttonState;
   }
@@ -429,7 +429,7 @@ var LivePersonVirtualAssistantModule = (function () {
     var state = checkButtonState();
     // only trigger the click function if the button is ONLINE
 
-    if( 
+    if ( 
       (state == BUTTON_STATES.BUSY && _config.TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE)
       ||
       (state == BUTTON_STATES.OFFLINE && _config.TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE)
@@ -497,7 +497,11 @@ var LivePersonVirtualAssistantModule = (function () {
         'type': 'pagediv',
         'divId': _config.EMBEDDED_BUTTON_DIV_CONTAINER_ID
       }];
-      console.log('--> LivePerson // -> injectButtonContainerId : ',sdes);
+      _log('injectButtonContainerId',{
+        'sdes':sdes,
+        'buttonContainer': buttonContainer,
+        'buttonDiv': buttonDiv,
+      });
       if (lpTag && lpTag.sdes && lpTag.sdes.send) {
         lpTag.sdes.send(sdes);
       } else if (lpTag && lpTag.sdes.push) {
@@ -505,6 +509,10 @@ var LivePersonVirtualAssistantModule = (function () {
       }
       // ^ The above will tell LP that the div now exists and is ready to receive the content - online/offline/busy etc...
     }
+  }
+
+  function getEventLog() {
+    return _eventLog;
   }
 
   // Reveal public pointers to
@@ -520,7 +528,8 @@ var LivePersonVirtualAssistantModule = (function () {
     agentsAreAvailable: agentsAreAvailable,
     agentsAreBusy: agentsAreBusy,
     agentsAreOffline: agentsAreOffline,
-    getActiveButton:getActiveButton
+    getActiveButton:getActiveButton,
+    getEventLog:getEventLog
   };
 
 })();

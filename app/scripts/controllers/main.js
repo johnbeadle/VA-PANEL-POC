@@ -18,7 +18,7 @@ angular.module('HsbcNetSampleApp')
     vm.agentsAvailable = false;
     vm.agentsBusy = false;
     vm.agentsOffline = false;
-
+    vm.buttonState = null;
     vm.customerAskedToughQuestion = false;
     var defaultLanguage = 'en_uk';
     var defaultCountry = 'GB';
@@ -166,7 +166,7 @@ angular.module('HsbcNetSampleApp')
     LivePersonVirtualAssistantModule.init(); // must be called every time the VA panel is loaded -regardless of visibility or status to ensure events are bound and listened for correctly with the lpTag window that may be on the page
 
     lpTag.events.bind('LP_VA_PANEL_MODULE', '*', function (eventData, info){
-      console.log('! LP_VA_PANEL_MODULE // ',info.eventName);
+      console.log('// main.js // LP_VA_PANEL_MODULE // ',info.eventName);
       if(info.eventName == 'SHOULD_SHOW_BUTTON_CONTENT') {
         vm.refreshButtonContent(eventData);
         // put code here to show/hide the relevant live chat button HTML within the VA panel as required based on the button status online/offline/busy etc...

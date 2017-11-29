@@ -159,8 +159,12 @@
             <!-- <button class="btn btn-warning" ng-click="mainCtrl.askToughQuestion()">Ask Tough Question</button> -->
             <button class="btn btn-success" ng-click="mainCtrl.escalateToChat()" ng-if="mainCtrl.buttonState === 'ONLINE'">Start a LiveChat</button>
             <button class="btn btn-warning" ng-if="mainCtrl.buttonState === 'BUSY'">Agents are Busy - try again</button>
-            <button class="btn btn-danger" ng-if="mainCtrl.buttonStat2 === 'OFFLINE'">Agents are offline </button>
-            
+            <button class="btn btn-danger" ng-if="mainCtrl.buttonState === 'OFFLINE'">Agents are offline </button>
+            <BR>
+            <p>
+            (Button State ==> {{mainCtrl.buttonState}})  
+            </p>  
+
           </div>
           <HR>
           <h5> ----- DEBUG ONLY ----</h5>
