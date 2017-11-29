@@ -251,7 +251,7 @@ var LivePersonVirtualAssistantModule = (function () {
     if (lpTag && lpTag.events && lpTag.events.bind) {
       _log('bindToChatEvents', { });
 
-      lpTag.events.bind('lpUnifiedWindow', 'state', function (e, d) {
+      lpTag.events.bind('lpUnifiedWindow', 'state', function (eventData, d) {
         /* 
         lpUnifiedWindow/state 
           tracks the state of the window itself
@@ -259,10 +259,10 @@ var LivePersonVirtualAssistantModule = (function () {
           init / initialised / waiting / chatting / interactive / resume
        */
 
-        if (e.state == 'preChat' || e.state == 'waiting' || e.state == 'resume' || e.state == 'interactive'|| e.state == 'postChat') {
+        if (eventData.state == 'preChat' || eventData.state == 'waiting' || eventData.state == 'resume' || eventData.state == 'interactive'|| eventData.state == 'postChat') {
           _triggerEvent(_config.EVENTS.HIDE, {
-            'e.state':e.state,
-            'reason': 'lpUnifiedWindow State = '+e.state
+            'eventData.state':eventData.state,
+            'reason': 'lpUnifiedWindow State = '+eventData.state
           });
         }
       });
@@ -292,7 +292,7 @@ var LivePersonVirtualAssistantModule = (function () {
         if (eventData.state == 'applicationEnded') {
           closeThankyouWindow();
           _triggerEvent(_config.EVENTS.SHOW, {
-            'e.state': e.state,
+            'eventData.state': eventData.state,
             'reason': 'lpUnifiedWindow conversationInfo  ' + eventData.state + ' event fired = post chat survey has been submitted'
           });
           // showVaPanel();
