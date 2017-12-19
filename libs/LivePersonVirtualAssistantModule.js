@@ -1,7 +1,7 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.0.1';
+  var _version = '2.0.2';
   var _config = {
-    USING_PROXY_BUTTON: true, // TRUE = CV provide the visible HTML for all button states-  nothing visible will be pushed from LiveEngage. FALSE = no custom HTML from CV =>  This will require an accompanying change on the LE2 admin side to insert the HTML of the button content. NOTE: Any HTML / images hosted need to be made responsive by CV using CSS classes and styles in your own VA Panel code. LiveEngage does NOT support responsive content/images for embedded button types. 
+    USING_PROXY_BUTTON: true,
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
     TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE:false,
     SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES: true, 
@@ -9,7 +9,7 @@ var LivePersonVirtualAssistantModule = (function () {
     EMBEDDED_BUTTON_ID_LOADED: null,
     EMBEDDED_BUTTON_TYPE: 5,
     EMBEDDED_BUTTON_INFO: null,
-    ENGAGEMENT_NAME_SHORTCODE: ':vap:', // this will used to pattern match against the name of the engagements to also check for button matches for VAP specific engagements. #
+    ENGAGEMENT_NAME_SHORTCODE: ':vap:',
     EMBEDDED_BUTTON_DIV_CONTAINER_ID: 'lpButtonDiv-need-help-panel',
     WINDOW_CLOSE_BUTTON_CLASS:'lp_close',
     NAMESPACE : 'LP_VA_PANEL_MODULE',
@@ -22,18 +22,30 @@ var LivePersonVirtualAssistantModule = (function () {
     }
   };
 
-  var _supportedLanguages = ['en','fr','zh_hans','zh_hant','ar','bm','es','es_mx'];
+  var _supportedLanguages = ['en','fr','zh_hans','zh','zh_tw','ar','bm','es','es_mx'];
   var _abandonedChatEvents = ['waiting','preChat','chatting','postChat'];
   var _translations = {
     'intro' : {
       'en':'en - Your conversation history so far...',
-      'fr':'fr - Your conversation history so far...',
-      'zh_hans':'zh_hans - Your conversation history so far...',
-      'zh_hant':'zh_hant - Your conversation history so far...',
-      'ar':'ar - Your conversation history so far...',
-      'bm':'bm - Your conversation history so far...',
-      'es':'es - Your conversation history so far...',
-      'es_mx':'es_mx - Your conversation history so far...'
+      'fr':'fr - ???...',
+      'zh':'zh_hans - ???...',
+      'zh_tw':'zh_hant - ???...',
+      'ar':'ar - ???...',
+      'bm':'bm - ???...',
+      'es':'es - ???...',
+      'es_mx':'es_mx - ???...',
+      'zh_hans': 'zh_hans - ???...'
+    },
+    'suffix' : {
+      'en': 'en - An Agent will be with you shortly...',
+      'fr': 'fr - ???...',
+      'zh': 'zh_hans - ???...',
+      'zh_tw': 'zh_hant - ???...',
+      'ar': 'ar - ???...',
+      'bm': 'bm - ???...',
+      'es': 'es - ???...',
+      'es_mx': 'es_mx - ???...',
+      'zh_hans': 'zh_hans - ???...'
     }
   };
 
@@ -87,8 +99,7 @@ var LivePersonVirtualAssistantModule = (function () {
       };
       lpTag.events.trigger(_config.NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION,eventData);
       _log(_config.EVENTS.BUTTON_IMPRESSION, eventData);
-    } else {
-    }
+    } 
   }
 
 
@@ -139,7 +150,7 @@ var LivePersonVirtualAssistantModule = (function () {
     if (lpTag && lpTag.events && lpTag.events.hasFired) {
       // events.hasFired exists - check if the lpTag window is already on the page before we got here?
       // if we find any events, we should hide the panel
-      var _windowEvents = lpTag.events.hasFired('lpUnifiedWindow', 'state');
+      // var _windowEvents = lpTag.events.hasFired('lpUnifiedWindow', 'state');
       if (chatWindowIsActive()) {
         _triggerEvent(_config.EVENTS.HIDE,{
           'reason':'hiding because chatWindowIsActive returned TRUE'
@@ -331,6 +342,12 @@ var LivePersonVirtualAssistantModule = (function () {
         preChatLinesArray = preChatLinesArray.concat(faqHistorySoFar);
         // if preChatLinesContent.length > 0 then we have been supplied with faq history so far.
         // UPDATE : DO NOT SEND preChatLines if empty! otherwise this will cause the 400 bad request error in the chat window
+        var preChatLinesSuffixMessage = getPreChatLinesSuffixMessages();
+
+        if (preChatLinesSuffixMessage) {
+          preChatLinesArray.push(preChatLinesSuffixMessage);
+        }
+
         if (preChatLinesArray.length > 0) {
           clicked = lpTag.taglets.rendererStub.click(_config.EMBEDDED_BUTTON_INFO.id, {
             preChatLines: preChatLinesArray
@@ -384,11 +401,24 @@ var LivePersonVirtualAssistantModule = (function () {
     }
   }
 
-  function getPreChatLinesIntroMessages() {
-    var preChatLinesIntroMessages = getPreChatLinesIntroTranslation();
-    return preChatLinesIntroMessages || false;
+  function getPreChatLinesSuffixTranslation(){
+    var language = getCurrentLanguageSelection();
+    if (language) {
+      return _translations.suffix[language];
+    } else {
+      return false;
+    }
   }
 
+  function getPreChatLinesIntroMessages() {
+    var preChatLinesIntroMessage = getPreChatLinesIntroTranslation();
+    return preChatLinesIntroMessage || false;
+  }
+
+  function getPreChatLinesSuffixMessages() {
+    var preChatLinesSuffixMessage = getPreChatLinesSuffixTranslation();
+    return preChatLinesSuffixMessage || false;
+  }
 
   function closeThankyouWindow() {
     var closeBtn = document.querySelector('.lp_close'); // this is the class of the close button
