@@ -27,9 +27,11 @@ describe('LivePersonVirtualAssistantModule tests', () => {
   });
   it('should start and bind events', () => {
     // lpTag = sinon.stub();
-
-    const OFFER_IMPRESSION_EVENT_NAME = 'LP_OFFERS:OFFER_IMPRESSION';
-    const MODULE_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME = 'LP_VA_PANEL_MODULE:EMBEDDED_BUTTON_IMPRESSION';
+    const MODULE_EVENT_NAMESPACE = 'LP_VA_PANEL_MODULE';
+    const LP_UNIFIED_WINDOW_EVENT_NAMESPACE = 'lpUnifiedWindow';
+    const LP_OFFERS_EVENT_NAMESPACE = 'LP_OFFERS';
+    // const OFFER_IMPRESSION_EVENT_NAME_ARRAY_KEY = 'LP_OFFERS:OFFER_IMPRESSION';
+    // const MODULE_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME_ARRAY_KEY = MODULE_EVENT_NAMESPACE+':EMBEDDED_BUTTON_IMPRESSION';
 
     var spy = sinon.spy();
     sandbox = sinon.sandbox.create();
@@ -45,41 +47,81 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       'appendChild':appendChildStub
     });
 
-    hasFiredCallback.withArgs('lpUnifiedWindow', 'conversationInfo').returns(false);
-    hasFiredCallback.withArgs('lpUnifiedWindow', 'state').returns(false);
-    hasFiredCallback.withArgs('LP_OFFERS', 'OFFER_IMPRESSION').returns(false);
-    hasFiredCallback.withArgs('LP_VA_PANEL_MODULE', 'EMBEDDED_BUTTON_IMPRESSION').returns(false);
+    hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').returns(false);
+    hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state').returns(false);
+    hasFiredCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').returns(false);
+    hasFiredCallback.withArgs(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION').returns(false);
     
     var moduleCallbacks = [];
 
-    bindCallback.withArgs('LP_OFFERS', 'OFFER_IMPRESSION').callsFake(function(namespace,evName,callback){
-      console.log('@bindCallback withArgs \'LP_OFFERS\', \'OFFER_IMPRESSION\' ',namespace,evName,callback);
-      console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ',OFFER_IMPRESSION_EVENT_NAME);
-      moduleCallbacks[OFFER_IMPRESSION_EVENT_NAME] = callback;
+    bindCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(function(namespace,evName,callback){
+      console.log('@bindCallback withArgs ',namespace,evName,callback);
+      // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
+      moduleCallbacks[namespace + ':' + evName] = callback;
+      // console.log('@bindCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
       return true;
     });
 
-    bindCallback.withArgs('LP_VA_PANEL_MODULE', 'EMBEDDED_BUTTON_IMPRESSION').callsFake(function(namespace,evName,callback){
-      console.log('@bindCallback withArgs \'LP_VA_PANEL_MODULE\', \'EMBEDDED_BUTTON_IMPRESSION\' ',namespace,evName,callback);
-      console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', MODULE_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME);
-
-      moduleCallbacks[MODULE_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME] = callback;
+    bindCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(function (namespace, evName, callback) {
+      console.log('@bindCallback withArgs ',namespace, evName, callback);
+      // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
+      moduleCallbacks[namespace + ':' + evName] = callback;
+      // console.log('@bindCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
       return true;
     });
 
-    triggerCallback.withArgs('LP_OFFERS', 'OFFER_IMPRESSION').callsFake(function (namespace, evName, data) {
-      console.log('@triggerCallback invoked! ',namespace,evName,data);
-      var callback = moduleCallbacks[OFFER_IMPRESSION_EVENT_NAME];
-      callback(data);
-      console.log('@triggerCallback --> firing stored callback with data ', callback, data);
 
-    });
-    triggerCallback.withArgs('LP_VA_PANEL_MODULE', 'EMBEDDED_BUTTON_IMPRESSION').callsFake(function (namespace, evName, data) {
-      var callback = moduleCallbacks[MODULE_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME];
-      callback(data);
-      console.log('@triggerCallback --> firing stored callback with data ', callback, data);
+    triggerCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(function(namespace,evName,data){
+      console.log('@triggerCallback invoked --> ', namespace, evName, data);
      
+      var callback = moduleCallbacks[namespace + ':' + evName] || false;
+      // console.log('@triggerCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
+      // console.log('@triggerCallback callback ', callback);
+      if (callback) {
+        callback(data);
+        console.log('@triggerCallback --> firing stored callback with data ', callback, data);
+      }
+      return true;
     });
+
+    bindCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(function(namespace,evName,callback){
+      // console.log('@bindCallback withArgs => ', namespace, evName, callback);
+      // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
+
+      moduleCallbacks[namespace + ':' + evName] = callback;
+      return true;
+    });
+
+    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(function (namespace, evName, data) {
+      console.log('@triggerCallback withArgs => ', namespace, evName, data);
+
+      var callback = moduleCallbacks[namespace + ':' + evName] || false;
+      if(callback) {
+        callback(data);
+        console.log('@triggerCallback --> firing stored callback with data ', callback, data);
+      }
+      return true;
+    });
+
+    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL').callsFake(function (namespace, evName, data) {
+      console.log('@triggerCallback SHOULD_HIDE_VA_PANEL withArgs => ', namespace, evName, data);
+      return true;
+    });
+    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL').callsFake(function (namespace, evName, data) {
+      console.log('@triggerCallback SHOULD_SHOW_VA_PANEL withArgs => ', namespace, evName, data);
+      return true;
+    });
+
+
+    triggerCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(function (namespace, evName, data) {
+      console.log('@triggerCallback withArgs => ', namespace, evName, data);
+      var callback = moduleCallbacks[namespace + ':' + evName];
+      if (callback) {
+        callback(data);
+        console.log('@triggerCallback --> firing stored callback with data ', callback, data);
+      }
+    });
+    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT').returns(true);
 
     lpTag = {};
     lpTag.events = {
@@ -98,14 +140,14 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     expect(lpTag.events.bind.called).to.equal(true);
     expect(lpTag.events.hasFired.called).to.equal(true);
 
-    expect(lpTag.events.bind.calledWith('lpUnifiedWindow','state')).to.equal(true);
-    expect(lpTag.events.bind.calledWith('lpUnifiedWindow', 'conversationInfo')).to.equal(true);
-    expect(lpTag.events.bind.calledWith('LP_OFFERS', 'OFFER_IMPRESSION')).to.equal(true);
-    expect(lpTag.events.bind.calledWith('LP_VA_PANEL_MODULE', 'EMBEDDED_BUTTON_IMPRESSION')).to.equal(true);
+    expect(lpTag.events.bind.calledWith(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'state')).to.equal(true);
+    expect(lpTag.events.bind.calledWith(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo')).to.equal(true);
+    expect(lpTag.events.bind.calledWith(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION')).to.equal(true);
+    expect(lpTag.events.bind.calledWith(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION')).to.equal(true);
 
-    expect(lpTag.events.hasFired.calledWith('lpUnifiedWindow','state')).to.equal(true);
-    expect(lpTag.events.hasFired.calledWith('lpUnifiedWindow','conversationInfo')).to.equal(false); // not called during .start --> only when checking window status during active chat
-    expect(lpTag.events.trigger.calledWith('LP_VA_PANEL_MODULE','EMBEDDED_BUTTON_IMPRESSION')).to.equal(false);
+    expect(lpTag.events.hasFired.calledWith(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'state')).to.equal(true);
+    expect(lpTag.events.hasFired.calledWith(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'conversationInfo')).to.equal(false); // not called during .start --> only when checking window status during active chat
+    expect(lpTag.events.trigger.calledWith(MODULE_EVENT_NAMESPACE,'EMBEDDED_BUTTON_IMPRESSION')).to.equal(false);
     module.injectButtonContainer();
     var eventData = {
       engagementId: '1234',
@@ -114,9 +156,42 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       campaignId: '5678',
       state: 1
     };
-    lpTag.events.trigger('LP_OFFERS','OFFER_IMPRESSION',eventData);
-    expect(lpTag.events.trigger.calledWith('LP_VA_PANEL_MODULE', 'EMBEDDED_BUTTON_IMPRESSION')).to.equal(true);
-    expect(lpTag.events.trigger.calledWith('LP_OFFERS', 'OFFER_IMPRESSION')).to.equal(true);
+    lpTag.events.trigger(LP_OFFERS_EVENT_NAMESPACE,'OFFER_IMPRESSION',eventData);
+    expect(lpTag.events.trigger.calledWith(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION')).to.equal(true);
+    expect(lpTag.events.trigger.calledWith(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION')).to.equal(true);
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT')).to.equal(true);
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'state',{
+      state:'preChat'
+    });
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL')).to.equal(true);
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
+
+    hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').callsFake(function(){
+      var eventLog = [
+        {
+          data : {
+            state: 'chatting'
+          }
+        },
+        {
+          data : {
+            state: 'ended'
+          }
+        }
+      ];
+      console.log('@hasFiredCallback returning eventLogs for conversationInfo : ',eventLog);
+      return eventLog;
+
+    });
+
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+      state: 'postChat'
+    });
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+      state: 'applicationEnded'
+    });
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(true);
 
   });
 });
