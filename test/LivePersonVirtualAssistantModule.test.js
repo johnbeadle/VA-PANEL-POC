@@ -5,10 +5,56 @@
 // var expect = require('chai').expect;
 // console.log(module);
 describe('LivePersonVirtualAssistantModule tests', () => {
+  const MODULE_EVENT_NAMESPACE = 'LP_VA_PANEL_MODULE';
+  const LP_UNIFIED_WINDOW_EVENT_NAMESPACE = 'lpUnifiedWindow';
+  const LP_OFFERS_EVENT_NAMESPACE = 'LP_OFFERS';
+  var spy = sinon.spy();
+  sandbox = sinon.sandbox.create();
+  var bindCallback = sinon.stub();
+  var triggerCallback = sinon.stub();
+  var hasFiredCallback = sinon.stub();
+  var sdesGetCallback = sinon.stub();
+  sdesGetCallback.withArgs('get').returns(true);
+
+  var appendChildStub = sinon.stub(document, 'appendChild').returns(true);
+  var getElementByIdStub = sinon.stub(document, 'getElementById');
+  getElementByIdStub.withArgs('button-container').returns({
+    'appendChild': appendChildStub
+  });
+  var moduleCallbacks = [];
+
+  var bindCallbackHandler = function(namespace,evName,callback) {
+    console.log('@bindCallback withArgs ', namespace, evName, callback);
+    // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
+    moduleCallbacks[namespace + ':' + evName] = callback;
+    // console.log('@bindCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
+    return true;
+  };
+
+  var triggerCallbackHandler = function (namespace, evName, data) {
+    console.log('@triggerCallback invoked --> ', namespace, evName, data);
+
+    var callback = moduleCallbacks[namespace + ':' + evName] || false;
+    // console.log('@triggerCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
+    // console.log('@triggerCallback callback ', callback);
+    if (callback) {
+      callback(data);
+      console.log('@triggerCallback --> firing stored callback with data ', callback, data);
+    }
+    return true;
+  }; 
+
   before(() => {
     module = LivePersonVirtualAssistantModule;
     expect = chai.expect;
     should = chai.should();
+    
+  });
+  beforeEach(() => {
+    hasFiredCallback.reset();
+    sdesGetCallback.reset();
+    bindCallback.reset();
+    triggerCallback.reset();
   });
   it('check exposed functions', () => {
     
@@ -26,82 +72,19 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     module.getEventLog.should.be.a('function'); 
   });
   it('should start and bind events', () => {
-    // lpTag = sinon.stub();
-    const MODULE_EVENT_NAMESPACE = 'LP_VA_PANEL_MODULE';
-    const LP_UNIFIED_WINDOW_EVENT_NAMESPACE = 'lpUnifiedWindow';
-    const LP_OFFERS_EVENT_NAMESPACE = 'LP_OFFERS';
-    // const OFFER_IMPRESSION_EVENT_NAME_ARRAY_KEY = 'LP_OFFERS:OFFER_IMPRESSION';
-    // const MODULE_EMBEDDED_BUTTON_IMPRESSION_EVENT_NAME_ARRAY_KEY = MODULE_EVENT_NAMESPACE+':EMBEDDED_BUTTON_IMPRESSION';
-
-    var spy = sinon.spy();
-    sandbox = sinon.sandbox.create();
-    var bindCallback = sinon.stub();
-    var triggerCallback = sinon.stub();
-    var hasFiredCallback = sinon.stub();
-    var sdesGetCallback = sinon.stub();
-    sdesGetCallback.withArgs('get').returns(true);
     
-    var appendChildStub = sinon.stub(document, 'appendChild').returns(true);
-    var getElementByIdStub = sinon.stub(document, 'getElementById');
-    getElementByIdStub.withArgs('button-container').returns({
-      'appendChild':appendChildStub
-    });
-
     hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').returns(false);
     hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state').returns(false);
     hasFiredCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').returns(false);
     hasFiredCallback.withArgs(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION').returns(false);
-    
-    var moduleCallbacks = [];
 
-    bindCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(function(namespace,evName,callback){
-      console.log('@bindCallback withArgs ',namespace,evName,callback);
-      // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
-      moduleCallbacks[namespace + ':' + evName] = callback;
-      // console.log('@bindCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
-      return true;
-    });
+    bindCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(bindCallbackHandler);
+    bindCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(bindCallbackHandler);
+    triggerCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(triggerCallbackHandler);
 
-    bindCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(function (namespace, evName, callback) {
-      console.log('@bindCallback withArgs ',namespace, evName, callback);
-      // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
-      moduleCallbacks[namespace + ':' + evName] = callback;
-      // console.log('@bindCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
-      return true;
-    });
+    bindCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(bindCallbackHandler);
 
-
-    triggerCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(function(namespace,evName,data){
-      console.log('@triggerCallback invoked --> ', namespace, evName, data);
-     
-      var callback = moduleCallbacks[namespace + ':' + evName] || false;
-      // console.log('@triggerCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
-      // console.log('@triggerCallback callback ', callback);
-      if (callback) {
-        callback(data);
-        console.log('@triggerCallback --> firing stored callback with data ', callback, data);
-      }
-      return true;
-    });
-
-    bindCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(function(namespace,evName,callback){
-      // console.log('@bindCallback withArgs => ', namespace, evName, callback);
-      // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
-
-      moduleCallbacks[namespace + ':' + evName] = callback;
-      return true;
-    });
-
-    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(function (namespace, evName, data) {
-      console.log('@triggerCallback withArgs => ', namespace, evName, data);
-
-      var callback = moduleCallbacks[namespace + ':' + evName] || false;
-      if(callback) {
-        callback(data);
-        console.log('@triggerCallback --> firing stored callback with data ', callback, data);
-      }
-      return true;
-    });
+    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(triggerCallbackHandler);
 
     triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL').callsFake(function (namespace, evName, data) {
       console.log('@triggerCallback SHOULD_HIDE_VA_PANEL withArgs => ', namespace, evName, data);
@@ -112,15 +95,7 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       return true;
     });
 
-
-    triggerCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(function (namespace, evName, data) {
-      console.log('@triggerCallback withArgs => ', namespace, evName, data);
-      var callback = moduleCallbacks[namespace + ':' + evName];
-      if (callback) {
-        callback(data);
-        console.log('@triggerCallback --> firing stored callback with data ', callback, data);
-      }
-    });
+    triggerCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(triggerCallbackHandler);
     triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT').returns(true);
 
     lpTag = {};
