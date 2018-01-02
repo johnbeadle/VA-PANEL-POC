@@ -374,6 +374,7 @@ var LivePersonVirtualAssistantModule = (function () {
 
   function getCurrentLanguageSelection(){
     var cartItems = lpTag.sdes.get('cart')[0] || false;
+    console.log('==> cartItems // ',cartItems);
     var foundSupportedLanguage = false;
     var currentLanguageSelection = null;
     if(cartItems && cartItems.products && cartItems.products.length) {

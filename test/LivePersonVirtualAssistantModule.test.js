@@ -11,6 +11,8 @@ describe('LivePersonVirtualAssistantModule tests', () => {
   var spy = sinon.spy();
   sandbox = sinon.sandbox.create();
   var bindCallback = sinon.stub();
+  var getEngagementStateCallback = sinon.stub();
+  var rendererStubCallback = sinon.stub();
   var triggerCallback = sinon.stub();
   var hasFiredCallback = sinon.stub();
   var sdesGetCallback = sinon.stub();
@@ -30,6 +32,43 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     // console.log('@bindCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
     return true;
   };
+
+  var sdesCallbackHandler = function(type) {
+    var cartItems = [
+      {
+        products: [
+          {
+            product : {
+              name: 'en'
+            }
+          }
+        ]
+      }
+    ];
+
+    var data = [];
+
+    switch (type) {
+    case 'cart':
+      data = cartItems;
+      break;
+    
+    default:
+      break;
+    }
+    return data;
+  };
+  
+  var getEngagementStateCallbackHandler = function(buttonId) {
+    console.log('@getEngagementStateCallbackHandler withArgs ', buttonId);
+    // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
+    
+    return {
+      state:1
+    };
+  };
+
+
 
   var triggerCallbackHandler = function (namespace, evName, data) {
     console.log('@triggerCallback invoked --> ', namespace, evName, data);
@@ -55,7 +94,7 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     sdesGetCallback.reset();
     bindCallback.reset();
     triggerCallback.reset();
-    // this.clock.restore();
+    getEngagementStateCallback.reset();
 
   });
   it('check exposed functions', () => {
@@ -107,10 +146,18 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       'hasFired': hasFiredCallback
     };
     lpTag.sdes = {
-      'get': sdesGetCallback,
+      'get': sdesCallbackHandler,
       'send': sinon.stub(),
       'push': sinon.stub()
     };
+
+    lpTag.taglets = {
+      'rendererStub': {
+        'click': sinon.stub(),
+        'getEngagementState': getEngagementStateCallbackHandler
+      }
+    };
+
 
     lpTag.hooks = {
       'push' : sinon.stub()
@@ -157,6 +204,10 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     expect(lpTag.events.trigger.calledWith(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION')).to.equal(true);
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT')).to.equal(true); // based on the eventData object this should have triggered this event within the module
 
+    module.startChat([
+      'line1',
+      'line2'
+    ]);
   /* trigger chat button click function to start  */
 
     lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'state',{
