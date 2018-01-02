@@ -55,6 +55,8 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     sdesGetCallback.reset();
     bindCallback.reset();
     triggerCallback.reset();
+    // this.clock.restore();
+
   });
   it('check exposed functions', () => {
     
@@ -110,8 +112,27 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       'push': sinon.stub()
     };
 
-    lpTag.hooks = sinon.stub();
-    module.start();
+    lpTag.hooks = {
+      'push' : sinon.stub()
+    };
+    var clock = sinon.useFakeTimers({
+      now: Date.now(),
+      shouldAdvanceTime:true
+    }); // fake setTimeout and setInterval used by the modue
+    
+    // ********************************** START THE MODULE ******************************** //
+    module.start(); // starts the module
+    // *********************************************************************************** //
+
+    clock.runAll();
+    console.log('lpTag.hooks.push.firstCall.args[0].name ==> ',lpTag.hooks.push.firstCall.args[0].name);
+
+    // cache hooks callback function for manual trigger later on
+    var hooksModuleCallback = lpTag.hooks.push.firstCall.args[0].callback;
+    console.log('hooksModuleCallback ==> ', hooksModuleCallback);
+
+    expect(lpTag.hooks.push.firstCall.args[0].name).to.equal('BEFORE_SUBMIT_SURVEY'); // checks the hooks have been added to the correct event
+
     expect(lpTag.events.bind.called).to.equal(true);
     expect(lpTag.events.hasFired.called).to.equal(true);
 
@@ -123,7 +144,7 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     expect(lpTag.events.hasFired.calledWith(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'state')).to.equal(true);
     expect(lpTag.events.hasFired.calledWith(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'conversationInfo')).to.equal(false); // not called during .start --> only when checking window status during active chat
     expect(lpTag.events.trigger.calledWith(MODULE_EVENT_NAMESPACE,'EMBEDDED_BUTTON_IMPRESSION')).to.equal(false);
-    module.injectButtonContainer();
+    module.injectButtonContainer(); // typically called once the containing panel has been revealed. This will create the DIV container for the incoming embedded button.
     var eventData = {
       engagementId: '1234',
       engagementType:5,
@@ -131,13 +152,23 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       campaignId: '5678',
       state: 1
     };
-    lpTag.events.trigger(LP_OFFERS_EVENT_NAMESPACE,'OFFER_IMPRESSION',eventData);
-    expect(lpTag.events.trigger.calledWith(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION')).to.equal(true);
+    lpTag.events.trigger(LP_OFFERS_EVENT_NAMESPACE,'OFFER_IMPRESSION',eventData); // mimics the button impression event
+    expect(lpTag.events.trigger.calledWith(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION')).to.equal(true); // now that button impression event has been faked, this internal event within the module should now have been triggered.
     expect(lpTag.events.trigger.calledWith(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION')).to.equal(true);
-    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT')).to.equal(true);
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT')).to.equal(true); // based on the eventData object this should have triggered this event within the module
+
+  /* trigger chat button click function to start  */
+
     lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'state',{
       state:'preChat'
     });
+    // hooksModuleCallback({
+    //   data : {
+    //     surveyType: 'preChatSurvey',
+    //     surveyData: null
+    //   }
+    // });
+
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL')).to.equal(true);
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
 
@@ -163,6 +194,9 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       state: 'postChat'
     });
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+      state: 'ended'
+    });
     lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
       state: 'applicationEnded'
     });

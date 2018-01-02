@@ -250,7 +250,6 @@ var LivePersonVirtualAssistantModule = (function () {
         });
       } else if (_waitForHooksCounter > 10) {
         _log('clearInterval/_waitForHooksCounter', { '_waitForHooksCounter': _waitForHooksCounter });
-
         clearInterval(_waitForHooks); // stop looping for hooks after 2 seconds
       }
     }, 200);
@@ -261,7 +260,6 @@ var LivePersonVirtualAssistantModule = (function () {
     // make sure the function and objects exist
     if (lpTag && lpTag.events && lpTag.events.bind) {
       _log('bindToChatEvents', { });
-
       lpTag.events.bind('lpUnifiedWindow', 'state', function (eventData, d) {
         /* 
         lpUnifiedWindow/state 
@@ -306,7 +304,6 @@ var LivePersonVirtualAssistantModule = (function () {
             'eventData.state': eventData.state,
             'reason': 'lpUnifiedWindow conversationInfo  ' + eventData.state + ' event fired = post chat survey has been submitted'
           });
-          // showVaPanel();
         }
 
         if (eventData.state == 'ended') {
@@ -440,7 +437,7 @@ var LivePersonVirtualAssistantModule = (function () {
     // 4 = busy
     var buttonState = 0;
     if (_config.EMBEDDED_BUTTON_INFO && _config.EMBEDDED_BUTTON_INFO.id) {
-      var buttonState = lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_INFO.id).state; // use the number you grabbed earlier when the button was loaded inside the panel
+      buttonState = lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_INFO.id).state; // use the number you grabbed earlier when the button was loaded inside the panel
     }
     return buttonState;
   }
