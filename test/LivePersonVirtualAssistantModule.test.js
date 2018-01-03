@@ -3,7 +3,7 @@
 // var module = require('../libs/LivePersonVirtualAssistantModule.js');
 // var should = chai.should();
 // var expect = require('chai').expect;
-// console.log(module);
+
 describe('LivePersonVirtualAssistantModule tests', () => {
   const MODULE_EVENT_NAMESPACE = 'LP_VA_PANEL_MODULE';
   const LP_UNIFIED_WINDOW_EVENT_NAMESPACE = 'lpUnifiedWindow';
@@ -24,7 +24,7 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     'appendChild': appendChildStub
   });
   var moduleCallbacks = [];
-
+  var clock;
   // generic handler for all lpTag.bind event calls when invoked with specific arguments to the sinon stub
   var bindCallbackHandler = function(namespace,evName,callback) {
     console.log('@bindCallback withArgs ', namespace, evName, callback);
@@ -79,11 +79,19 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     return true;
   }; 
 
+  // ToDo 
+  // stub document.getElementsByClassName
+  // should return object with stubbed .addEventListener function
+
   before(() => {
     module = LivePersonVirtualAssistantModule;
     expect = chai.expect;
     should = chai.should();
     
+  });
+  afterEach(() => {
+    clock.restore();
+    module.reset();
   });
   beforeEach(() => {
     hasFiredCallback.reset();
@@ -91,6 +99,12 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     bindCallback.reset();
     triggerCallback.reset();
     getEngagementStateCallback.reset();
+    clock = sinon.useFakeTimers({
+      now: Date.now(),
+      shouldAdvanceTime: true
+    }); // fake setTimeout and setInterval used by the modue
+
+    /* define the matching arguments for the hasFired stub and how they should be returned */
     hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').returns(false);
     hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state').returns(false);
     hasFiredCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').returns(false);
@@ -121,8 +135,8 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       return true;
     });
     /* 
-  stub the lpTag object and properties as required
-*/
+      stub the lpTag object and properties as required
+    */
     lpTag = {};
     lpTag.events = {
       'bind': bindCallback.returns(true),
@@ -152,11 +166,8 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     
     // console.log(LivePersonVirtualAssistantModule);
     module.should.be.a('Object'); 
-    module.start.should.be.a('function'); 
-    module.init.should.be.a('function'); 
-    module.injectButtonContainer.should.be.a('function'); 
-    module.escalateToChat.should.be.a('function'); 
     module.startChat.should.be.a('function'); 
+    module.reset.should.be.a('function'); 
     module.agentsAreAvailable.should.be.a('function'); 
     module.agentsAreBusy.should.be.a('function'); 
     module.agentsAreOffline.should.be.a('function'); 
@@ -165,24 +176,16 @@ describe('LivePersonVirtualAssistantModule tests', () => {
   });
   it('should start and bind events', () => {
     
-    /* define the matching arguments for the hasFired stub and how they should be returned */
-
-
-    var clock = sinon.useFakeTimers({
-      now: Date.now(),
-      shouldAdvanceTime:true
-    }); // fake setTimeout and setInterval used by the modue
-    
     // ********************************** START THE MODULE ******************************** //
-    module.start(); // starts the module
+    module.init(); // starts the module
     // *********************************************************************************** //
 
-    clock.runAll();
+    clock.runAll(); // enable the fake timers to run as normal
     // console.log('lpTag.hooks.push.firstCall.args[0].name ==> ',lpTag.hooks.push.firstCall.args[0].name);
 
     // cache hooks callback function for manual trigger later on
     var hooksModuleCallback = lpTag.hooks.push.firstCall.args[0].callback;
-    // console.log('hooksModuleCallback ==> ', hooksModuleCallback);
+    console.log('1 --> hooksModuleCallback ==> ', hooksModuleCallback);
 
     expect(lpTag.hooks.push.firstCall.args[0].name).to.equal('BEFORE_SUBMIT_SURVEY'); // checks the hooks have been added to the correct event
 
@@ -214,17 +217,11 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       'line1',
       'line2'
     ]);
-  /* trigger chat button click function to start  */
+    /* trigger chat button click function to start  */
 
     lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE,'state',{
       state:'preChat'
     });
-    // hooksModuleCallback({
-    //   data : {
-    //     surveyType: 'preChatSurvey',
-    //     surveyData: null
-    //   }
-    // });
 
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL')).to.equal(true);
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
@@ -263,5 +260,117 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     });
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(true);
 
+  });
+  it('should fire the HIDE event if the window is already open when the module starts', () => {
+    /* 
+      Fake loading the chat window for chat in progress on page refresh
+    */
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state', {
+      state: 'initialising'
+    });
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state', {
+      state: 'interactive'
+    });
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state', {
+      state: 'resume'
+    });
+
+    // ********************************** START THE MODULE ******************************** //
+    module.init(); // starts the module
+    clock.runAll(); // enable the fake timers to run as normal
+    // *********************************************************************************** //
+    var hooksModuleCallback = lpTag.hooks.push.firstCall.args[0].callback;
+    console.log('2 --> hooksModuleCallback ==> ', hooksModuleCallback);
+   
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL')).to.equal(true);
+    hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').callsFake(function (namespace, event) {
+      console.log('@hasFiredCallback => namespace / event inputs // ', namespace, event);
+      var eventLog = [
+        {
+          data: {
+            state: 'chatting'
+          }
+        },
+        {
+          data: {
+            state: 'ended'
+          }
+        }
+      ];
+      console.log('@hasFiredCallback returning eventLogs for conversationInfo : ', eventLog);
+      return eventLog;
+
+    });
+
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+      state: 'postChat'
+    });
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
+
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+      state: 'applicationEnded'
+    });
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(true);
+  });
+
+  it('should fire the hooks callback after prechat survey submission', () => {
+    // ********************************** START THE MODULE ******************************** //
+    module.init(); // starts the module
+    // *********************************************************************************** //
+
+    clock.runAll(); // enable the fake timers to run as normal
+    var hooksModuleCallback = lpTag.hooks.push.firstCall.args[0].callback;
+    console.log('3 --> hooksModuleCallback ==> ', hooksModuleCallback);
+
+    expect(lpTag.hooks.push.firstCall.args[0].name).to.equal('BEFORE_SUBMIT_SURVEY'); // checks the hooks have been added to the correct event
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+      state: 'preChat'
+    });
+    // lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+    //   state: 'ended'
+    // });
+    hooksModuleCallback({
+      data: {
+        surveyType: 'preChatSurvey',
+        surveyData: null
+      }
+    });
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(true);
+    
+    var lastCall = triggerCallback.lastCall;
+    var lastCallEventData = lastCall.args[2] || null;
+    console.log('triggerCallback lastCallEventData', lastCallEventData);
+    expect(lastCallEventData['options.data.surveyType']).to.equal('preChatSurvey');
+    expect(lastCallEventData['options.data.surveyData']).to.equal(null);
+    expect(lastCallEventData['reason']).to.equal('BEFORE_SUBMIT_SURVEY // preChatSurvey / no surveyData so closing thank you window and showing panel');
+  });
+  it('should fire the SHOW event after postchat survey submission', () => {
+    // ********************************** START THE MODULE ******************************** //
+    module.init(); // starts the module
+    // *********************************************************************************** //
+
+    clock.runAll(); // enable the fake timers to run as normal
+    var hooksModuleCallback = lpTag.hooks.push.firstCall.args[0].callback;
+    console.log('3 --> hooksModuleCallback ==> ', hooksModuleCallback);
+
+    expect(lpTag.hooks.push.firstCall.args[0].name).to.equal('BEFORE_SUBMIT_SURVEY'); // checks the hooks have been added to the correct event
+    lpTag.events.trigger(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo', {
+      state: 'applicationEnded'
+    });
+    hooksModuleCallback({
+      data: {
+        surveyType: 'postChatSurvey',
+        surveyData: true
+      }
+    });
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(true);
+    
+    var lastCall = triggerCallback.lastCall;
+    var lastCallEventData = lastCall.args[2] || null;
+    console.log('triggerCallback lastCallEventData', lastCallEventData);
+    expect(lastCallEventData['options.data.surveyType']).to.equal('postChatSurvey');
+    expect(lastCallEventData['options.data.surveyData']).to.equal(true);
+    expect(lastCallEventData['reason']).to.equal('BEFORE_SUBMIT_SURVEY // postChatSurvey / closing thank you window and showing panel');
   });
 });

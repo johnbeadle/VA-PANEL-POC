@@ -144,20 +144,25 @@ var LivePersonVirtualAssistantModule = (function () {
     _log(name,data);
   }
 
+  function _reset() {
+    _eventLog = [];
+    _eventBindingsDone = false;
+  }
   function _init() {
     // bind to the window
     _eventLog = [];
     if (lpTag && lpTag.events && lpTag.events.hasFired) {
       // events.hasFired exists - check if the lpTag window is already on the page before we got here?
-      // if we find any events, we should hide the panel
-      // var _windowEvents = lpTag.events.hasFired('lpUnifiedWindow', 'state');
+      // if we find any events, we should fire the event to hide the panel
       if (chatWindowIsActive()) {
         _triggerEvent(_config.EVENTS.HIDE,{
-          'reason':'hiding because chatWindowIsActive returned TRUE'
+          'reason':'panel should be hidden because chatWindowIsActive returned TRUE'
         });
       }
     }
-    //still call bindToChatEvents so we listen for other events that may still fire.
+    // this check is for when working within ajax page context where lpTag.newPage may be used in conjunction with the .start method of this module incorrectly.
+    // ideally .start will only ever be called once on page load.
+    // this check was to prevent multiple event bindings being created.
     if(_eventBindingsDone === false) {
       bindToChatEvents();
       addSurveyHooks();
@@ -240,9 +245,12 @@ var LivePersonVirtualAssistantModule = (function () {
   }
 
   function addSurveyHooks() {
+    console.log('==> addSurveyHooks');
     var _waitForHooks = setInterval(function () {
+      console.log('==> _waitForHooks');
       var _waitForHooksCounter = 0;
       if (lpTag && lpTag.hooks && lpTag.hooks) {
+        console.log('==> hooks found!');
         clearInterval(_waitForHooks);
         lpTag.hooks.push({
           name: 'BEFORE_SUBMIT_SURVEY',
@@ -551,6 +559,7 @@ var LivePersonVirtualAssistantModule = (function () {
     version:_version,
     start: _init,
     init: _init,
+    reset: _reset,
     injectButtonContainer: injectLivePersonEmbeddedButtonContainer,
     escalateToChat: startChat,
     startChat: startChat,
