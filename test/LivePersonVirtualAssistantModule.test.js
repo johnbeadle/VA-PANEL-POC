@@ -10,12 +10,12 @@ describe('LivePersonVirtualAssistantModule tests', () => {
   const LP_OFFERS_EVENT_NAMESPACE = 'LP_OFFERS';
   var spy = sinon.spy();
   sandbox = sinon.sandbox.create();
-  var bindCallback = sinon.stub();
-  var getEngagementStateCallback = sinon.stub();
-  var rendererStubCallback = sinon.stub();
-  var triggerCallback = sinon.stub();
-  var hasFiredCallback = sinon.stub();
-  var sdesGetCallback = sinon.stub();
+  var bindCallback = sinon.stub(); // used for stubbing all lpTag.events.bind calls
+  var getEngagementStateCallback = sinon.stub(); // used for stubbing all lpTag.taglets.rendererStub.getEngagementState calls
+  var rendererStubCallback = sinon.stub(); // used for stubbing all lpTag.events.rendererStub calls
+  var triggerCallback = sinon.stub(); // used for stubbing all lpTag.events.trigger calls
+  var hasFiredCallback = sinon.stub(); // used for stubbing all lpTag.events.hasFired calls
+  var sdesGetCallback = sinon.stub(); // lpTag.sdes.get(type) stub
   sdesGetCallback.withArgs('get').returns(true);
 
   var appendChildStub = sinon.stub(document, 'appendChild').returns(true);
@@ -25,6 +25,7 @@ describe('LivePersonVirtualAssistantModule tests', () => {
   });
   var moduleCallbacks = [];
 
+  // generic handler for all lpTag.bind event calls when invoked with specific arguments to the sinon stub
   var bindCallbackHandler = function(namespace,evName,callback) {
     console.log('@bindCallback withArgs ', namespace, evName, callback);
     // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
@@ -68,14 +69,9 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     };
   };
 
-
-
   var triggerCallbackHandler = function (namespace, evName, data) {
     console.log('@triggerCallback invoked --> ', namespace, evName, data);
-
     var callback = moduleCallbacks[namespace + ':' + evName] || false;
-    // console.log('@triggerCallback moduleCallbacks/', namespace + ':' + evName, moduleCallbacks[namespace + ':' + evName]);
-    // console.log('@triggerCallback callback ', callback);
     if (callback) {
       callback(data);
       console.log('@triggerCallback --> firing stored callback with data ', callback, data);
@@ -95,38 +91,27 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     bindCallback.reset();
     triggerCallback.reset();
     getEngagementStateCallback.reset();
-
-  });
-  it('check exposed functions', () => {
-    
-    // console.log(LivePersonVirtualAssistantModule);
-    module.should.be.a('Object'); 
-    module.start.should.be.a('function'); 
-    module.init.should.be.a('function'); 
-    module.injectButtonContainer.should.be.a('function'); 
-    module.escalateToChat.should.be.a('function'); 
-    module.startChat.should.be.a('function'); 
-    module.agentsAreAvailable.should.be.a('function'); 
-    module.agentsAreBusy.should.be.a('function'); 
-    module.agentsAreOffline.should.be.a('function'); 
-    module.getActiveButton.should.be.a('function'); 
-    module.getEventLog.should.be.a('function'); 
-  });
-  it('should start and bind events', () => {
-    
     hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').returns(false);
     hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state').returns(false);
     hasFiredCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').returns(false);
     hasFiredCallback.withArgs(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION').returns(false);
 
+    /* define the matching arguments passed into the .bind stub which then map to the generic bindCallbackHandler method */
     bindCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(bindCallbackHandler);
     bindCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(bindCallbackHandler);
-    triggerCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(triggerCallbackHandler);
-
     bindCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(bindCallbackHandler);
 
-    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(triggerCallbackHandler);
+    /* define the matching arguments passed into the .trigger stub which then map to the generic triggerCallbackHandler method */
+    triggerCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE).callsFake(triggerCallbackHandler);
+    triggerCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(triggerCallbackHandler);
 
+    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE).callsFake(triggerCallbackHandler); // this sets up generic handler for all MODULE_EVENT_NAMESPACE events on the .trigger stub to pass through into the triggerCallbackHandler
+
+    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT').returns(true); // however here we override this behaviour for specific, verbose event args to define unique return behaviour...in this case the SHOULD_SHOW_BUTTON_CONTENT should return true regardless.
+
+    /* 
+      we then change the behaviour to capture and log when SHOULD_HIDE_VA_PANEL and SHOULD_SHOW_VA_PANEL are called.
+    */
     triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL').callsFake(function (namespace, evName, data) {
       console.log('@triggerCallback SHOULD_HIDE_VA_PANEL withArgs => ', namespace, evName, data);
       return true;
@@ -135,10 +120,9 @@ describe('LivePersonVirtualAssistantModule tests', () => {
       console.log('@triggerCallback SHOULD_SHOW_VA_PANEL withArgs => ', namespace, evName, data);
       return true;
     });
-
-    triggerCallback.withArgs(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION').callsFake(triggerCallbackHandler);
-    triggerCallback.withArgs(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_BUTTON_CONTENT').returns(true);
-
+    /* 
+  stub the lpTag object and properties as required
+*/
     lpTag = {};
     lpTag.events = {
       'bind': bindCallback.returns(true),
@@ -160,8 +144,30 @@ describe('LivePersonVirtualAssistantModule tests', () => {
 
 
     lpTag.hooks = {
-      'push' : sinon.stub()
+      'push': sinon.stub()
     };
+
+  });
+  it('check exposed functions', () => {
+    
+    // console.log(LivePersonVirtualAssistantModule);
+    module.should.be.a('Object'); 
+    module.start.should.be.a('function'); 
+    module.init.should.be.a('function'); 
+    module.injectButtonContainer.should.be.a('function'); 
+    module.escalateToChat.should.be.a('function'); 
+    module.startChat.should.be.a('function'); 
+    module.agentsAreAvailable.should.be.a('function'); 
+    module.agentsAreBusy.should.be.a('function'); 
+    module.agentsAreOffline.should.be.a('function'); 
+    module.getActiveButton.should.be.a('function'); 
+    module.getEventLog.should.be.a('function'); 
+  });
+  it('should start and bind events', () => {
+    
+    /* define the matching arguments for the hasFired stub and how they should be returned */
+
+
     var clock = sinon.useFakeTimers({
       now: Date.now(),
       shouldAdvanceTime:true
@@ -172,11 +178,11 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     // *********************************************************************************** //
 
     clock.runAll();
-    console.log('lpTag.hooks.push.firstCall.args[0].name ==> ',lpTag.hooks.push.firstCall.args[0].name);
+    // console.log('lpTag.hooks.push.firstCall.args[0].name ==> ',lpTag.hooks.push.firstCall.args[0].name);
 
     // cache hooks callback function for manual trigger later on
     var hooksModuleCallback = lpTag.hooks.push.firstCall.args[0].callback;
-    console.log('hooksModuleCallback ==> ', hooksModuleCallback);
+    // console.log('hooksModuleCallback ==> ', hooksModuleCallback);
 
     expect(lpTag.hooks.push.firstCall.args[0].name).to.equal('BEFORE_SUBMIT_SURVEY'); // checks the hooks have been added to the correct event
 
@@ -223,7 +229,11 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL')).to.equal(true);
     expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
 
-    hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').callsFake(function(){
+    /* 
+    NOTE: below we are changing the fake stub for this specific combination of hasFiredCallback mid test to fit with the flow of responses we would have from lpTag object in the real world.
+    */
+    hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'conversationInfo').callsFake(function(namespace,event){
+      console.log('@hasFiredCallback => namespace / event inputs // ',namespace,event);
       var eventLog = [
         {
           data : {
