@@ -1,5 +1,5 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.0.2';
+  var _version = '2.0.9';
   var _config = {
     USING_PROXY_BUTTON: true,
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
@@ -145,6 +145,7 @@ var LivePersonVirtualAssistantModule = (function () {
   }
 
   function _reset() {
+    //added reset function to clear flags and event logs between navigations if required
     _eventLog = [];
     _eventBindingsDone = false;
   }
