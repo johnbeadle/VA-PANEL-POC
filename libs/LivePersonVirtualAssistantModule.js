@@ -74,7 +74,7 @@ var LivePersonVirtualAssistantModule = (function () {
       'timestamp':Date.now()
     });
   }
-  function checkIfButtonImpressionIsForVaPanel(e, d) {
+  function checkIfButtonImpressionIsForVaPanel(e) {
     
     /* 
      This event fires every time a button is displayed on the page
@@ -148,10 +148,11 @@ var LivePersonVirtualAssistantModule = (function () {
     //added reset function to clear flags and event logs between navigations if required
     _eventLog = [];
     _eventBindingsDone = false;
+    _config.EMBEDDED_BUTTON_INFO = null;
   }
   function _init() {
     // bind to the window
-    _eventLog = [];
+    // _eventLog = [];
     if (lpTag && lpTag.events && lpTag.events.hasFired) {
       // events.hasFired exists - check if the lpTag window is already on the page before we got here?
       // if we find any events, we should fire the event to hide the panel
@@ -369,9 +370,6 @@ var LivePersonVirtualAssistantModule = (function () {
     }
   }
 
-  function getCurrentCountrySelection(){
-
-  }
 
   function isSupportedLanguage(lang) {
     var supportedLanguage = false;
@@ -446,7 +444,7 @@ var LivePersonVirtualAssistantModule = (function () {
     // 2 = offline
     // 4 = busy
     var buttonState = 0;
-    if (_config.EMBEDDED_BUTTON_INFO && _config.EMBEDDED_BUTTON_INFO.id) {
+    if (_config.EMBEDDED_BUTTON_INFO && _config.EMBEDDED_BUTTON_INFO.id && lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_INFO.id)) {
       buttonState = lpTag.taglets.rendererStub.getEngagementState(_config.EMBEDDED_BUTTON_INFO.id).state; // use the number you grabbed earlier when the button was loaded inside the panel
     }
     return buttonState;
@@ -478,36 +476,6 @@ var LivePersonVirtualAssistantModule = (function () {
     } else {
       //ToDo trigger event
       return false;
-    }
-
-  }
-
-
-  function _toggleClass(selector, className) {
-    var el = document.querySelector(selector);
-    if (el.classList) {
-      el.classList.toggle(className);
-    } else {
-      var classes = el.className.split(' ');
-      var existingIndex = classes.indexOf(className);
-
-      if (existingIndex >= 0)
-        classes.splice(existingIndex, 1);
-      else
-        classes.push(className);
-
-      el.className = classes.join(' ');
-    }
-  }
-
-  function _removeClass(selector, className) {
-    var el = document.querySelector(selector);
-
-    if (el.classList) {
-      el.classList.remove(className);
-    }
-    else {
-      el.className = el.className.replace(new RegExp('(^|\\b)' + className.split(' ').join('|') + '(\\b|$)', 'gi'), ' ');
     }
 
   }

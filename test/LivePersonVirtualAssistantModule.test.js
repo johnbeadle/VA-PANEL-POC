@@ -61,11 +61,27 @@ describe('LivePersonVirtualAssistantModule tests', () => {
   };
   
   var getEngagementStateCallbackHandler = function(buttonId) {
-    console.log('@getEngagementStateCallbackHandler withArgs ', buttonId);
-    // console.log('@bindCallback withArgs --> saving to moduleCallbacks[] @ ', namespace + ':' + evName);
+    console.log('@getEngagementStateCallbackHandler withArgs => ', buttonId);
     
+    var fakeButtonState = 0;
+    switch (buttonId) {
+    case 'forceOnlineState':
+      fakeButtonState = 1;
+      break;
+    case 'forceOfflineState':
+      fakeButtonState = 2;
+      break;
+    case 'forceBusyState':
+      fakeButtonState = 4;
+      break;
+    default:
+      fakeButtonState = 1;
+      break;
+    }
+    console.log('@getEngagementStateCallbackHandler returning state =>  ', fakeButtonState);
+
     return {
-      state:1
+      state: fakeButtonState
     };
   };
 
@@ -82,6 +98,8 @@ describe('LivePersonVirtualAssistantModule tests', () => {
   // ToDo 
   // stub document.getElementsByClassName
   // should return object with stubbed .addEventListener function
+
+  // stub document.querySelector for closeBtn
 
   before(() => {
     module = LivePersonVirtualAssistantModule;
@@ -372,5 +390,136 @@ describe('LivePersonVirtualAssistantModule tests', () => {
     expect(lastCallEventData['options.data.surveyType']).to.equal('postChatSurvey');
     expect(lastCallEventData['options.data.surveyData']).to.equal(true);
     expect(lastCallEventData['reason']).to.equal('BEFORE_SUBMIT_SURVEY // postChatSurvey / closing thank you window and showing panel');
+  });
+  it('should return correct states for the active button after it is shown / changes', () => {
+    // init module
+    // ********************************** START THE MODULE ******************************** //
+    module.init(); // starts the module
+    // *********************************************************************************** //
+
+    clock.runAll(); // enable the fake timers to run as normal
+    // return null before button impression
+    // console.log(module.getActiveButton());
+    expect(module.agentsAreAvailable()).to.equal(false);
+    expect(module.agentsAreBusy()).to.equal(false);
+    expect(module.agentsAreOffline()).to.equal(false);
+
+    expect(module.getActiveButton()).to.equal(null);
+    // fake button impression with ONLINE
+    var eventData = {
+      engagementId: 'forceOnlineState',
+      engagementType: 5,
+      engagementName: ':vap: test button 2',
+      campaignId: '8888',
+      state: 1
+    };
+    lpTag.events.trigger(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION', eventData); // mimics the button impression event
+    // check state function responses
+    expect(module.agentsAreAvailable()).to.equal(true);
+    expect(module.agentsAreBusy()).to.equal(false);
+    expect(module.agentsAreOffline()).to.equal(false);
+    var activeBtn = module.getActiveButton();
+    console.log('activebtn => ',activeBtn);
+    expect(activeBtn).should.be.a('Object');
+    expect(activeBtn.id).to.equal(eventData.engagementId);
+    expect(activeBtn.state).to.equal(eventData.state);
+    expect(activeBtn.cid).to.equal(eventData.campaignId);
+    expect(activeBtn.name).to.equal(eventData.engagementName);
+
+    // fake with OFFLINE and repeat
+    var eventData = {
+      engagementId: 'forceOfflineState',
+      engagementType: 5,
+      engagementName: ':vap: test button 2',
+      campaignId: '8888',
+      state: 2
+    };
+    lpTag.events.trigger(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION', eventData); // mimics the button impression event
+    // check state function responses
+    expect(module.agentsAreAvailable()).to.equal(false);
+    expect(module.agentsAreBusy()).to.equal(false);
+    expect(module.agentsAreOffline()).to.equal(true);
+
+    var activeBtn = module.getActiveButton();
+    console.log('activebtn => ', activeBtn);
+    expect(activeBtn).should.be.a('Object');
+    expect(activeBtn.id).to.equal(eventData.engagementId);
+    expect(activeBtn.state).to.equal(eventData.state);
+    expect(activeBtn.cid).to.equal(eventData.campaignId);
+    expect(activeBtn.name).to.equal(eventData.engagementName);
+
+    // fake with BUSY and repeat.
+    var eventData = {
+      engagementId: 'forceBusyState',
+      engagementType: 5,
+      engagementName: ':vap: test button 2',
+      campaignId: '8888',
+      state: 4
+    };
+    lpTag.events.trigger(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION', eventData); // mimics the button impression event
+    // check state function responses
+    expect(module.agentsAreAvailable()).to.equal(false);
+    expect(module.agentsAreBusy()).to.equal(true);
+    expect(module.agentsAreOffline()).to.equal(false);
+
+    var activeBtn = module.getActiveButton();
+    console.log('activebtn => ', activeBtn);
+    expect(activeBtn).should.be.a('Object');
+    expect(activeBtn.id).to.equal(eventData.engagementId);
+    expect(activeBtn.state).to.equal(eventData.state);
+    expect(activeBtn.cid).to.equal(eventData.campaignId);
+    expect(activeBtn.name).to.equal(eventData.engagementName);
+  });
+  it('should return an accurate event log', () => {
+    // empty before init
+    expect(module.getEventLog().length).to.equal(0);
+    // ********************************** START THE MODULE ******************************** //
+    module.init(); // starts the module
+    // *********************************************************************************** //
+
+    clock.runAll(); // enable the fake timers to run as normal
+    console.log(module.getEventLog());
+    var events = module.getEventLog();
+    expect(events.length).to.equal(1);
+    expect(events[0].name).to.equal('bindToChatEvents');
+    var eventData = {
+      engagementId: '9999',
+      engagementType: 5,
+      engagementName: ':vap: test button 999',
+      campaignId: '8888',
+      state: 1
+    };
+    lpTag.events.trigger(LP_OFFERS_EVENT_NAMESPACE, 'OFFER_IMPRESSION', eventData); // mimics the button impression event
+    // check state function responses
+    console.log(module.getEventLog());
+    events = module.getEventLog();
+    expect(events.length).to.equal(3);
+    events.forEach(event => {
+      console.log(event.name);
+    });
+    expect(events[1].name).to.equal('SHOULD_SHOW_BUTTON_CONTENT');
+    expect(events[2].name).to.equal('EMBEDDED_BUTTON_IMPRESSION');
+
+  });
+  it('should trigger the HIDE event if the window is active when the module starts', () => {
+    hasFiredCallback.withArgs(LP_UNIFIED_WINDOW_EVENT_NAMESPACE, 'state').returns([0,1,2,3]);
+    module.init();
+    clock.runAll(); // enable the fake timers to run as normal
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_HIDE_VA_PANEL')).to.equal(true);
+    expect(triggerCallback.calledWith(MODULE_EVENT_NAMESPACE, 'SHOULD_SHOW_VA_PANEL')).to.equal(false);
+  });
+  it('should only bindToChatEvents once - regardless how many .init calls are made', () => {
+    
+    module.init();
+    expect(lpTag.events.bind.calledWith(MODULE_EVENT_NAMESPACE, 'EMBEDDED_BUTTON_IMPRESSION')).to.equal(true);
+    var events = module.getEventLog();
+    expect(events.length).to.equal(1);
+    expect(events[0].name).to.equal('bindToChatEvents');
+    // console.log('------------');
+    module.init();
+    events = module.getEventLog();
+    // console.log('------------',events);
+    expect(events.length).to.equal(2);
+    expect(events[1].name).to.equal('EVENT_BINDINGS_DONE');
   });
 });
