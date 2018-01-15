@@ -151,3 +151,34 @@ LivePersonVirtualAssistantModule.startChat(messages); // passes the messages as 
   + `true` : would allow the module to fake click the hidden chat button even if `OFFLINE` **NOTE:** this will display an `OFFLINE` survey if enabled on the account for this engagement
   
 
+## How to access/run unit tests?
+
++ Install the dependecies using `npm`
+
+```
+npm install
+```
+
++ Run the unit test karma file
+
+```
+grunt karma:prod
+```
+
+Sample output:
+
+```
+Running "karma:prod" (karma) task
+15 01 2018 19:18:18.720:INFO [karma]: Karma v0.13.22 server started at http://localhost:9877/
+15 01 2018 19:18:18.731:INFO [launcher]: Starting browser Chrome
+15 01 2018 19:18:18.740:INFO [launcher]: Starting browser Firefox
+.....
+.....
+
+Firefox 57.0.0 (Mac OS X 10.12.0) LOG: '==> addSurveyHooks'
+Chrome 64.0.3282 (Mac OS X 10.12.6): Executed 9 of 9 SUCCESS (0.119 secs / 0.032 secs)
+Firefox 57.0.0 (Mac OS X 10.12.0): Executed 9 of 9 SUCCESS (0.315 secs / 0.059 secs)
+TOTAL: 18 SUCCESS
+
+Done, without errors.
+```
