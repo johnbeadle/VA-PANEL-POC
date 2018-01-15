@@ -475,6 +475,9 @@ var LivePersonVirtualAssistantModule = (function () {
       triggerChatButtonClick(preChatLines);
     } else {
       //ToDo trigger event
+      // _triggerEvent(_config.EVENTS.SHOW, {
+      //   'reason': 'panel should be hidden because chatWindowIsActive returned TRUE'
+      // });
       return false;
     }
 
