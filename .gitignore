@@ -6,3 +6,4 @@
 .jscsrc
 .jshintrc
 .editorconfig
+/test/
