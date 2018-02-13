@@ -6,4 +6,12 @@
 .jscsrc
 .jshintrc
 .editorconfig
-/test/
+test/
+test/coverage/report-lcov/lcov-report/libs/index.html
+test/coverage/report-lcovonly.txt
+test/coverage/report-html/index.html
+test/coverage/report-html/libs/LivePersonVirtualAssistantModule.js.html
+test/coverage/report-html/libs/index.html
+test/coverage/report-lcov/lcov.info
+test/coverage/report-lcov/lcov-report/index.html
+test/coverage/report-lcov/lcov-report/libs/LivePersonVirtualAssistantModule.js.html
