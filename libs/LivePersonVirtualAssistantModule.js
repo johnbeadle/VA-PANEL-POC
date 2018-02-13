@@ -191,8 +191,7 @@ var LivePersonVirtualAssistantModule = (function () {
       lastEvent.data.state == 'preChat' || lastEvent.data.state == 'waiting' || lastEvent.data.state == 'chatting' || lastEvent.data.state == 'postChat'
     */
 
-    if (  lastEvent.data.state 
-        && 
+    if (  lastEvent.data.state && 
         _abandonedChatEvents.indexOf(lastEvent.data.state) > -1  
     ) {
       // visitor abandonded without submitted survey or connecting to agent...show panel
@@ -201,12 +200,9 @@ var LivePersonVirtualAssistantModule = (function () {
         'lastEvent' : lastEvent 
       });
     }
-    if( lastEvent.data.state 
-        &&
-        lastEvent.data.state == 'ended'
-        && 
-        previousEvent.data.state
-        && 
+    if( lastEvent.data.state &&
+        lastEvent.data.state == 'ended' && 
+        previousEvent.data.state && 
         _abandonedChatEvents.indexOf(previousEvent.data.state) > -1 
     ) {
       _triggerEvent(_config.EVENTS.SHOW, {
@@ -466,10 +462,8 @@ var LivePersonVirtualAssistantModule = (function () {
     // only trigger the click function if the button is ONLINE
 
     if ( 
-      (state == BUTTON_STATES.BUSY && _config.TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE)
-      ||
-      (state == BUTTON_STATES.OFFLINE && _config.TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE)
-      ||
+      (state == BUTTON_STATES.BUSY && _config.TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE) ||
+      (state == BUTTON_STATES.OFFLINE && _config.TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE) ||
       (state == BUTTON_STATES.ONLINE)
     ) {
       triggerChatButtonClick(preChatLines);
