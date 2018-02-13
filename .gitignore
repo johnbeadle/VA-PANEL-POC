@@ -6,7 +6,7 @@
 .jscsrc
 .jshintrc
 .editorconfig
-test/
+test/coverage/
 test/coverage/report-lcov/lcov-report/libs/index.html
 test/coverage/report-lcovonly.txt
 test/coverage/report-html/index.html
