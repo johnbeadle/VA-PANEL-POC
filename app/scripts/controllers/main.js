@@ -137,10 +137,6 @@ angular.module('HsbcNetSampleApp')
       $location.path('/home/' + vm.customerCountry + '/' + vm.countryLanguageMappings[vm.customerCountry].default);
     };
 
-    vm.togglePanel = function() {
-      $('#slideout').toggleClass('on');
-      LivePersonVirtualAssistantModule.injectButtonContainer();
-    };
 
     vm.escalateToChat = function() {
       // this example shows passing a fake array of strings to represent the conversation history so far...
@@ -164,6 +160,11 @@ angular.module('HsbcNetSampleApp')
     };
 
     LivePersonVirtualAssistantModule.init(); // must be called every time the VA panel is loaded -regardless of visibility or status to ensure events are bound and listened for correctly with the lpTag window that may be on the page
+    vm.togglePanel = function () {
+      $('#slideout').toggleClass('on');
+      LivePersonVirtualAssistantModule.injectButtonContainer();
+    };
+
 
     lpTag.events.bind('LP_VA_PANEL_MODULE', '*', function (eventData, info){
       console.log('// main.js // LP_VA_PANEL_MODULE // ',info.eventName);
