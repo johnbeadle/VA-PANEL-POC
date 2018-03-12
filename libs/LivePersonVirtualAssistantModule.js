@@ -1,6 +1,7 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.0.9';
+  var _version = '2.1.0';
   var _config = {
+    COUNTRY_CODE_LOCATION: 'cstatus',
     USING_PROXY_BUTTON: true,
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
     TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE:false,
@@ -22,30 +23,52 @@ var LivePersonVirtualAssistantModule = (function () {
     }
   };
 
-  var _supportedLanguages = ['en','fr','zh_hans','zh','zh_tw','ar','bm','es','es_mx'];
+  var _supportedLanguages = ['en','fr','zh_hans','zh','zh_cn','zh_tw','ar','bm','es','es_mx'];
   var _abandonedChatEvents = ['waiting','preChat','chatting','postChat'];
   var _translations = {
-    'intro' : {
-      'en':'en - Your conversation history so far...',
-      'fr':'fr - ???...',
-      'zh':'zh_hans - ???...',
-      'zh_tw':'zh_hant - ???...',
-      'ar':'ar - ???...',
-      'bm':'bm - ???...',
-      'es':'es - ???...',
-      'es_mx':'es_mx - ???...',
-      'zh_hans': 'zh_hans - ???...'
+    'default' : {
+      'intro': 'Your conversation history so far ...',
+      'suffix': 'An Agent will be with you shortly ...'
     },
-    'suffix' : {
-      'en': 'en - An Agent will be with you shortly...',
-      'fr': 'fr - ???...',
-      'zh': 'zh_hans - ???...',
-      'zh_tw': 'zh_hant - ???...',
-      'ar': 'ar - ???...',
-      'bm': 'bm - ???...',
-      'es': 'es - ???...',
-      'es_mx': 'es_mx - ???...',
-      'zh_hans': 'zh_hans - ???...'
+    'en': {
+      'intro': 'Your conversation history so far ...',
+      'suffix': 'An Agent will be with you shortly ...'
+    },
+    'es_mx': {
+      'intro': 'Su historial de conversaciones hasta la fecha...',
+      'suffix': ''
+    },
+    'fr': {
+      'intro': 'Votre historique de conversations jusqu\'à présent...',
+      'suffix': 'Un agent vous répondra bientôt...'
+    },
+    'zh': {
+      'intro': '很快将会有座席代表与您聊天...',
+      'suffix': '很快将会有座席代表与您聊天...'
+    },
+    'zh_cn': {
+      'intro': '很快将会有座席代表与您聊天...',
+      'suffix': '很快将会有座席代表与您聊天...'
+    },
+    'zh_tw': {
+      'intro': '您目前的對談記錄...',
+      'suffix': '服務人員很快會與您聯絡...'
+    },
+    'zh_hans': {
+      'intro': '',
+      'suffix': 'Dentro de poco un agente estará con usted...'
+    },
+    'ar': {
+      'intro': '',
+      'suffix': ''
+    },
+    'bm': {
+      'intro': '',
+      'suffix': ''
+    },
+    'es': {
+      'intro': '',
+      'suffix': ''
     }
   };
 
@@ -334,21 +357,22 @@ var LivePersonVirtualAssistantModule = (function () {
     if (lpTag && lpTag.taglets && lpTag.taglets.rendererStub) {
       if (_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar.length > 0) {
         // grab FAQ lines...this POC just gets the HTML content from specific class elements...you will use your own API and functions to get this information from the chat in progress.
-        // var preChatLinesArray = addPreChatLinesToChat();
-        var preChatLinesIntroMessages = getPreChatLinesIntroMessages();
+        var currentLanguage = getCurrentLanguageSelection();
+        var translations = isSupportedLanguage(currentLanguage) ? getLanguageTranslations(currentLanguage) : null;
         var preChatLinesArray = [];
-        if(preChatLinesIntroMessages) {
-          preChatLinesArray.push(preChatLinesIntroMessages);
-        } else if (preChatLinesIntroMessages === false) {
+        if(translations && translations.intro) {
+          preChatLinesArray.push(translations.intro);
+        } else {
           // we could not find a cart item which matched a supported language in our translation list, therefore we do not have any intro messages to add to the conversation
+          console.log('[LP VA Module] ==> unsupported language OR no INTRO translations found for current languages : ',currentLanguage);
         }
         preChatLinesArray = preChatLinesArray.concat(faqHistorySoFar);
         // if preChatLinesContent.length > 0 then we have been supplied with faq history so far.
         // UPDATE : DO NOT SEND preChatLines if empty! otherwise this will cause the 400 bad request error in the chat window
-        var preChatLinesSuffixMessage = getPreChatLinesSuffixMessages();
-
-        if (preChatLinesSuffixMessage) {
-          preChatLinesArray.push(preChatLinesSuffixMessage);
+        if (translations && translations.suffix) {
+          preChatLinesArray.push(translations.suffix);
+        } else {
+          console.log('[LP VA Module] ==> unsupported language OR no SUFFIX translations found for current languages : ',currentLanguage);
         }
 
         if (preChatLinesArray.length > 0) {
@@ -372,20 +396,34 @@ var LivePersonVirtualAssistantModule = (function () {
     if(_supportedLanguages.indexOf(lang) > -1) {
       supportedLanguage = true;
     }
+    console.log('[LP VA MODULE] => isSupportedLanguage ? ',lang,supportedLanguage);
     return supportedLanguage;
+  }
+
+  function getCountrySelection() {
+    var customerInfoExists = lpTag.sdes.get('ctmrinfo')[0] || null;
+    var countryCode = null;
+    if (customerInfoExists && customerInfoExists.info) {
+      var customerInfo = customerInfoExists.info;
+      countryCode = customerInfo[_config.COUNTRY_CODE_LOCATION] || null;
+
+    }
+    return countryCode;
   }
 
   function getCurrentLanguageSelection(){
     var cartItems = lpTag.sdes.get('cart')[0] || false;
-    console.log('==> cartItems // ',cartItems);
+    console.log('[LP VA Module] ==> getCurrentLanguageSelection : cartItems // ',cartItems);
     var foundSupportedLanguage = false;
     var currentLanguageSelection = null;
     if(cartItems && cartItems.products && cartItems.products.length) {
       for (let i = 0; i < cartItems.products.length; i++) {
-        const possibleLanguageSelection = cartItems.products[i].product.name || null;
+        var possibleLanguageSelection = cartItems.products[i].product.name || null;
         if(isSupportedLanguage(possibleLanguageSelection)) {
           currentLanguageSelection = possibleLanguageSelection;
           foundSupportedLanguage = true;
+          console.log('[LP VA Module] ==> getCurrentLanguageSelection : foundSupportedLanguage // ',currentLanguageSelection);
+
           break;
         }
       }
@@ -393,32 +431,8 @@ var LivePersonVirtualAssistantModule = (function () {
     return currentLanguageSelection;
   }
 
-  function getPreChatLinesIntroTranslation() {
-    var language = getCurrentLanguageSelection();
-    if(language) {
-      return _translations.intro[language];
-    } else {
-      return false;
-    }
-  }
-
-  function getPreChatLinesSuffixTranslation(){
-    var language = getCurrentLanguageSelection();
-    if (language) {
-      return _translations.suffix[language];
-    } else {
-      return false;
-    }
-  }
-
-  function getPreChatLinesIntroMessages() {
-    var preChatLinesIntroMessage = getPreChatLinesIntroTranslation();
-    return preChatLinesIntroMessage || false;
-  }
-
-  function getPreChatLinesSuffixMessages() {
-    var preChatLinesSuffixMessage = getPreChatLinesSuffixTranslation();
-    return preChatLinesSuffixMessage || false;
+  function getLanguageTranslations(language) {
+    return _translations[language] || null;
   }
 
   function closeThankyouWindow() {
@@ -468,10 +482,6 @@ var LivePersonVirtualAssistantModule = (function () {
     ) {
       triggerChatButtonClick(preChatLines);
     } else {
-      //ToDo trigger event
-      // _triggerEvent(_config.EVENTS.SHOW, {
-      //   'reason': 'panel should be hidden because chatWindowIsActive returned TRUE'
-      // });
       return false;
     }
 
@@ -533,7 +543,10 @@ var LivePersonVirtualAssistantModule = (function () {
     agentsAreBusy: agentsAreBusy,
     agentsAreOffline: agentsAreOffline,
     getActiveButton:getActiveButton,
-    getEventLog:getEventLog
+    getEventLog:getEventLog,
+    returnCurrentLanguageValueIfSupported: getCurrentLanguageSelection,
+    getCountry: getCountrySelection,
+    supportedLanguages: _supportedLanguages
   };
 
 })();

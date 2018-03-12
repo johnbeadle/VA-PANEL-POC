@@ -1,0 +1,68 @@
+Arguments: 
+  /Users/jbeadle/.nvm/versions/node/v8.5.0/bin/node /usr/local/Cellar/yarn/1.5.1/libexec/bin/yarn.js test
+
+PATH: 
+  /Users/jbeadle/.nvm/versions/node/v8.5.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin
+
+Yarn version: 
+  1.5.1
+
+Node version: 
+  8.5.0
+
+Platform: 
+  darwin x64
+
+npm manifest: 
+  {
+    "name": "clientshsbccmbvapanel",
+    "private": true,
+    "devDependencies": {
+      "chai": "^3.4.1",
+      "grunt": "^0.4.5",
+      "grunt-blanket-mocha": "^0.5.0",
+      "grunt-contrib-watch": "^0.6.1",
+      "grunt-karma": "^0.12.1",
+      "karma": "^0.13.15",
+      "karma-chrome-launcher": "^0.2.2",
+      "karma-coverage": "^0.5.3",
+      "karma-firefox-launcher": "^0.1.7",
+      "karma-html2js-preprocessor": "^0.1.0",
+      "karma-mocha": "^0.2.1",
+      "karma-phantomjs-launcher": "1.0.4",
+      "load-grunt-tasks": "^3.4.0",
+      "sinon": "^4.1.3",
+      "sinon-chai": "^2.8.0"
+    },
+    "engines": {
+      "node": ">=0.10.0"
+    },
+    "scripts": {
+      "test": "karma start test/karma.conf.js"
+    },
+    "dependencies": {
+      "plugin": "^0.3.3"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: Command failed.
+  Exit code: 1
+  Command: sh
+  Arguments: -c karma start test/karma.conf.js
+  Directory: /Users/jbeadle/www/hsbc/clients-hsbc-va-panel
+  Output:
+  
+      at ProcessTermError.MessageError (/usr/local/Cellar/yarn/1.5.1/libexec/lib/cli.js:186:110)
+      at new ProcessTermError (/usr/local/Cellar/yarn/1.5.1/libexec/lib/cli.js:226:113)
+      at ChildProcess.<anonymous> (/usr/local/Cellar/yarn/1.5.1/libexec/lib/cli.js:30281:17)
+      at emitTwo (events.js:125:13)
+      at ChildProcess.emit (events.js:213:7)
+      at maybeClose (internal/child_process.js:927:16)
+      at Process.ChildProcess._handle.onexit (internal/child_process.js:211:5)
