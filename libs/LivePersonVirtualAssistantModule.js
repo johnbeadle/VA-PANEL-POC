@@ -1,5 +1,5 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.0.9';
+  var _version = '2.1.0';
   var _config = {
     USING_PROXY_BUTTON: true,
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
@@ -22,29 +22,31 @@ var LivePersonVirtualAssistantModule = (function () {
     }
   };
 
-  var _supportedLanguages = ['en','fr','zh_hans','zh','zh_tw','ar','bm','es','es_mx'];
+  var _supportedLanguages = ['en','fr','zh_hans','zh','zh_cn','zh_tw','ar','bm','es','es_mx'];
   var _abandonedChatEvents = ['waiting','preChat','chatting','postChat'];
   var _translations = {
     'intro' : {
       'en':'en - Your conversation history so far...',
-      'fr':'fr - ???...',
-      'zh':'zh_hans - ???...',
-      'zh_tw':'zh_hant - ???...',
+      'fr':'Votre historique de conversations jusqu\'à présent...',
+      'zh':'您至今的谈话历史...',
+      'zh_cn':'您至今的谈话历史...',
+      'zh_tw':'您目前的對談記錄...',
       'ar':'ar - ???...',
       'bm':'bm - ???...',
       'es':'es - ???...',
-      'es_mx':'es_mx - ???...',
+      'es_mx':'Su historial de conversaciones hasta la fecha...',
       'zh_hans': 'zh_hans - ???...'
     },
     'suffix' : {
       'en': 'en - An Agent will be with you shortly...',
-      'fr': 'fr - ???...',
-      'zh': 'zh_hans - ???...',
-      'zh_tw': 'zh_hant - ???...',
+      'fr': 'Un agent vous répondra bientôt...',
+      'zh': '很快将会有座席代表与您聊天...',
+      'zh_cn': '很快将会有座席代表与您聊天...',
+      'zh_tw': '服務人員很快會與您聯絡...',
       'ar': 'ar - ???...',
       'bm': 'bm - ???...',
       'es': 'es - ???...',
-      'es_mx': 'es_mx - ???...',
+      'es_mx': 'Dentro de poco un agente estará con usted...',
       'zh_hans': 'zh_hans - ???...'
     }
   };
