@@ -90,6 +90,23 @@ LivePersonVirtualAssistantModule.startChat(messages); // passes the messages as 
 
 + **NOTE:** sending messages to `.startChat` requires the `_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES` option to be set to `true` (default)
 
+## Helper methods (**Added in 2.1.x**)
+
+### `LivePersonVirtualAssistantModule.getCountry()`
+
+* returns current country value by returning the `customer status` value from `customer info`
+
+### `LivePersonVirtualAssistantModule.returnCurrentLanguageValueIfSupported()`
+
+* returns the string of language code **IF is detected as a supported language by the panel**
+* if no matching language code is found in the cart items, it will return `null`
+
+### `LivePersonVirtualAssistantModule.supportedLanguages` 
+
+* returns an `array` of supported languages **for the VA Panel**
+
+
+
 ## High Level Process Summary
 
 ### Website page opens 

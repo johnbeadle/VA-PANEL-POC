@@ -550,8 +550,9 @@ var LivePersonVirtualAssistantModule = (function () {
     agentsAreOffline: agentsAreOffline,
     getActiveButton:getActiveButton,
     getEventLog:getEventLog,
-    getCurrentLanguageIfSupported: getCurrentLanguageSelection,
-    getCountry: getCountrySelection
+    returnCurrentLanguageValueIfSupported: getCurrentLanguageSelection,
+    getCountry: getCountrySelection,
+    supportedLanguages: _supportedLanguages
   };
 
 })();

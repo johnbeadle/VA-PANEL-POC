@@ -22,7 +22,7 @@
     "node": ">=0.10.0"
   },
   "scripts": {
-    "test": "karma start test/karma.conf.js"
+    "test": "grunt karma:dev"
   },
   "dependencies": {
     "plugin": "^0.3.3"
