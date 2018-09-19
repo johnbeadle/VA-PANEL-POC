@@ -1,8 +1,13 @@
-# HSBCNet VA Panel Integration 
+# HSBC M&S Bank VA Panel Integration 
 
-This will document the process and changes specifically for HSBCNet
+This will document the process and changes specifically for HSBC M&S Bank
 
-## Major Breaking Changes for v2.x
+## Changes for v3.x
+
+* **REMOVED**: checking of language / country code functionality 
+  * `_config.FIXED_LANGUAGE` set to `true` to override language selections from the page variables -  not in scope for this LOB
+
+### FYI as per v2.x
 
 + The code itself has now been refactored into a self-contained module called `LivePersonVirtualAssistantModule`. 
 + All code relating to manipulation of styling / showing and hiding of the panel has been **REMOVED** 
