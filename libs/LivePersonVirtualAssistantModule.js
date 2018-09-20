@@ -1,8 +1,6 @@
 var LivePersonVirtualAssistantModule = (function () {
   var _version = '3.0.0';
   var _config = {
-    FIXED_LANGUAGE: true,
-    DEFAULT_LANGUAGE: 'en',
     COUNTRY_CODE_LOCATION: 'cstatus',
     USING_PROXY_BUTTON: true,
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
@@ -367,33 +365,68 @@ var LivePersonVirtualAssistantModule = (function () {
   }
 
   function getCountrySelection() {
-    var customerInfoExists = lpTag.sdes.get('ctmrinfo')[0] || null;
+    var sdesAdded = lpTag.events.hasFired("lp_sdes","VAR_ADDED");
     var countryCode = null;
-    if (customerInfoExists && customerInfoExists.info) {
-      var customerInfo = customerInfoExists.info;
-      countryCode = customerInfo[_config.COUNTRY_CODE_LOCATION] || null;
-
+    if (!sdesAdded) {
+      return null;
     }
+    for (let sdeAddedEvent = 0; sdeAddedEvent < sdesAdded.length; sdeAddedEvent++) {
+      var event = sdesAdded[sdeAddedEvent];
+      if (event.data.type === 'ctmrinfo') {
+        if (event.data && event.data.info) {
+          var customerInfo = event.data.info;
+          countryCode = customerInfo[_config.COUNTRY_CODE_LOCATION] || null;
+    
+        }
+      }
+    }
+  
     return countryCode;
   }
 
   function getCurrentLanguageSelection(){
-    var cartItems = lpTag.sdes.get('cart') && lpTag.sdes.get('cart')[0] || false;
-    console.log('[LP VA Module] ==> getCurrentLanguageSelection : cartItems // ',cartItems);
+
+    // loop array of lpTag.events.hasFired("lp_sdes","VAR_ADDED"); and check for presence of cart SDE
     var foundSupportedLanguage = false;
     var currentLanguageSelection = null;
-    if(cartItems && cartItems.products && cartItems.products.length) {
-      for (let i = 0; i < cartItems.products.length; i++) {
-        var possibleLanguageSelection = cartItems.products[i].product.name || null;
-        if(isSupportedLanguage(possibleLanguageSelection)) {
-          currentLanguageSelection = possibleLanguageSelection;
-          foundSupportedLanguage = true;
-          console.log('[LP VA Module] ==> getCurrentLanguageSelection : foundSupportedLanguage // ',currentLanguageSelection);
-
-          break;
+    var sdesAdded = lpTag.events.hasFired("lp_sdes","VAR_ADDED");
+    if (!sdesAdded) {
+      return null;
+    }
+    for (let sdeAddedEvent = 0; sdeAddedEvent < sdesAdded.length; sdeAddedEvent++) {
+      var event = sdesAdded[sdeAddedEvent];
+      if (event.data.type === 'cart') {
+        var cartItems = (event.data.products && event.data.products.length && event.data.products.length > 0) || false;
+        if (cartItems) {
+          for (let i = 0; i < event.data.products.length; i++) {
+            var possibleLanguageSelection = event.data.products[i].product.name || null;
+            if(isSupportedLanguage(possibleLanguageSelection)) {
+              currentLanguageSelection = possibleLanguageSelection;
+              foundSupportedLanguage = true;
+              console.log('[LP VA Module] ==> getCurrentLanguageSelection : foundSupportedLanguage // ',currentLanguageSelection);
+    
+              break;
+            }
+          }
         }
       }
     }
+
+    // var cartItems = lpTag.sdes.get('cart')[0] || false;
+    // console.log('[LP VA Module] ==> getCurrentLanguageSelection : cartItems // ',cartItems);
+    
+    // if(cartItems && cartItems.products && cartItems.products.length) {
+    //   for (let i = 0; i < cartItems.products.length; i++) {
+    //     var possibleLanguageSelection = cartItems.products[i].product.name || null;
+    //     if(isSupportedLanguage(possibleLanguageSelection)) {
+    //       currentLanguageSelection = possibleLanguageSelection;
+    //       foundSupportedLanguage = true;
+    //       console.log('[LP VA Module] ==> getCurrentLanguageSelection : foundSupportedLanguage // ',currentLanguageSelection);
+
+    //       break;
+    //     }
+    //   }
+    // }
     return currentLanguageSelection;
   }
 

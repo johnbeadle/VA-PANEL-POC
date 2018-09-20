@@ -20,7 +20,7 @@ angular.module('HsbcNetSampleApp')
     vm.agentsOffline = false;
     vm.buttonState = null;
     vm.customerAskedToughQuestion = false;
-    var defaultLanguage = 'en_uk';
+    var defaultLanguage = 'en';
     var defaultCountry = 'GB';
     
     vm.debugInfo = 'Once a button has loaded we will show its details here for debug...';

@@ -22,11 +22,7 @@
     "node": ">=0.10.0"
   },
   "scripts": {
-<<<<<<< HEAD
     "test": "grunt karma:prod"
-=======
-    "test": "grunt karma:dev"
->>>>>>> hsbcnet/develop
   },
   "dependencies": {
     "plugin": "^0.3.3"
