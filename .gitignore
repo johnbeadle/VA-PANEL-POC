@@ -15,3 +15,4 @@ test/coverage/report-html/libs/index.html
 test/coverage/report-lcov/lcov.info
 test/coverage/report-lcov/lcov-report/index.html
 test/coverage/report-lcov/lcov-report/libs/LivePersonVirtualAssistantModule.js.html
+.DS_Store
