@@ -1,6 +1,8 @@
 var LivePersonVirtualAssistantModule = (function () {
   var _version = '3.0.0';
   var _config = {
+    FIXED_LANGUAGE: true,
+    DEFAULT_LANGUAGE: 'en',
     COUNTRY_CODE_LOCATION: 'cstatus',
     USING_PROXY_BUTTON: true,
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
@@ -412,21 +414,6 @@ var LivePersonVirtualAssistantModule = (function () {
       }
     }
 
-    // var cartItems = lpTag.sdes.get('cart')[0] || false;
-    // console.log('[LP VA Module] ==> getCurrentLanguageSelection : cartItems // ',cartItems);
-    
-    // if(cartItems && cartItems.products && cartItems.products.length) {
-    //   for (let i = 0; i < cartItems.products.length; i++) {
-    //     var possibleLanguageSelection = cartItems.products[i].product.name || null;
-    //     if(isSupportedLanguage(possibleLanguageSelection)) {
-    //       currentLanguageSelection = possibleLanguageSelection;
-    //       foundSupportedLanguage = true;
-    //       console.log('[LP VA Module] ==> getCurrentLanguageSelection : foundSupportedLanguage // ',currentLanguageSelection);
-
-    //       break;
-    //     }
-    //   }
-    // }
     return currentLanguageSelection;
   }
 
