@@ -2,12 +2,12 @@
 
 /**
  * @ngdoc function
- * @name HsbcNetSampleApp.controller:MainCtrl
+ * @name HsbcMsBankSampleApp.controller:MainCtrl
  * @description
  * # MainCtrl
- * Controller of the HsbcNetSampleApp
+ * Controller of the HsbcMsBankSampleApp
  */
-angular.module('HsbcNetSampleApp')
+angular.module('HsbcMsBankSampleApp')
   .controller('MainCtrl', function ($scope,$window,$location,$routeParams,$route) {
     this.awesomeThings = [
       'HTML5 Boilerplate',
@@ -62,7 +62,7 @@ angular.module('HsbcNetSampleApp')
       }
     };
     // set language based on optional routeParams or fallback to default
-    $window.document.title = 'HSBCNet Develop';
+    $window.document.title = 'HSBC MS BANK Develop';
     $scope.$on('$routeChangeSuccess', function () {
       vm.customerLanguage = $routeParams.lang || defaultLanguage;
       vm.customerCountry = $routeParams.country || defaultCountry;

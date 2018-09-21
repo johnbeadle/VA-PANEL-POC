@@ -2,14 +2,14 @@
 
 /**
  * @ngdoc overview
- * @name HsbcNetSampleApp
+ * @name HsbcMsBankSampleApp
  * @description
- * # HsbcNetSampleApp
+ * # HsbcMsBankSampleApp
  *
  * Main module of the application.
  */
 angular
-  .module('HsbcNetSampleApp', [
+  .module('HsbcMsBankSampleApp', [
     'ngCookies',
     'ngRoute'
   ])
