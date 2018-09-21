@@ -2,12 +2,12 @@
 
 /**
  * @ngdoc function
- * @name HsbcNetSampleApp.controller:MainCtrl
+ * @name HsbcMsBankSampleApp.controller:MainCtrl
  * @description
  * # MainCtrl
- * Controller of the HsbcNetSampleApp
+ * Controller of the HsbcMsBankSampleApp
  */
-angular.module('HsbcNetSampleApp')
+angular.module('HsbcMsBankSampleApp')
   .controller('AboutCtrl', function ($scope,$window,$location) {
     this.awesomeThings = [
       'EX1',
@@ -34,7 +34,7 @@ angular.module('HsbcNetSampleApp')
         }, 'quantity': 1
       }]
     };
-    var lpSection = ['hsbcnet','page-about'];
+    var lpSection = ['hsbcmsbank','page-about'];
 
     var lpSdes =[
       lpCountryTemplate,

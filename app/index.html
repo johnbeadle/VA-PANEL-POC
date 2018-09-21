@@ -1,5 +1,5 @@
 <!doctype html>
-<html ng-app="HsbcNetSampleApp">
+<html ng-app="HsbcMsBankSampleApp">
   <head>
     <meta charset="utf-8">
     <title></title>
@@ -37,7 +37,7 @@
                 <span class="icon-bar"></span>
               </button>
         
-              <a class="navbar-brand" href="#/home">HSBCNet VA Panel Example SPA</a>
+              <a class="navbar-brand" href="#/home">HSBC MS BANK VA Panel Example SPA</a>
             </div>
         
             <div class="collapse navbar-collapse" id="js-navbar-collapse">
@@ -92,34 +92,7 @@
                   </ul>
                 </td>
               </tr>
-              <!-- <tr ng-show="mainCtrl.customerCountry == 'GB'">
-                <td><i class="glyphicon glyphicon-globe"> {{mainCtrl.customerCountry}}</i></td>
-                <td>
-                  <ul>
-                    <li>
-                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage('en_uk')">en_uk</a>
-                    </li>
-                    <li>
-                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage('en_us')">en_us</a>
-                    </li>
-                  </ul>
-                </td>
-              </tr>
-              <tr ng-show="mainCtrl.customerCountry == 'MX'">
-                <td>
-                  <i class="glyphicon glyphicon-globe"> {{mainCtrl.customerCountry}}</i>
-                </td>
-                <td>
-                  <ul>
-                    <li>
-                      <a ng-click="mainCtrl.changeLanguage('es_mx')">Spanish (es_mx)</a>
-                    </li>
-                    <li>
-                      <a ng-click="mainCtrl.changeLanguage('en')">English (en)</a>
-                    </li>
-                  </ul>
-                </td>
-              </tr> -->
+
             </tbody>
           </table>
         </div>
@@ -143,20 +116,11 @@
                 <b>Virtual Assistant:</b> Sorry I cannot answer that question for you...
                 <br> would you like to speak with an agent?
                 <BR>
-                <!-- <p ng-click="mainCtrl.escalateToChat()">
-                  <strong>
-                    <u>Yes</u>
-                  </strong>
-                </p>
-                <p>No</p> -->
+
               </li>
-              <!-- <li class="list-group-item faq-chat-line" ng-if="mainCtrl.agentsAvailable === false">
-                <b>Virtual Assistant:</b> Sorry I cannot answer that question for you...
-                <BR>
-                <p>(agents are offline so no escalate to chat option shown!)</p>
-              </li> -->
+
             </ul>
-            <!-- <button class="btn btn-warning" ng-click="mainCtrl.askToughQuestion()">Ask Tough Question</button> -->
+
             <button class="btn btn-success" ng-click="mainCtrl.escalateToChat()" ng-if="mainCtrl.buttonState === 'ONLINE'">Start a LiveChat</button>
             <button class="btn btn-warning" ng-if="mainCtrl.buttonState === 'BUSY'">Agents are Busy - try again</button>
             <button class="btn btn-danger" ng-if="mainCtrl.buttonState === 'OFFLINE'">Agents are offline </button>
