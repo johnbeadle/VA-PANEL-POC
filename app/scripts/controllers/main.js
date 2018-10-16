@@ -76,7 +76,7 @@ angular.module('HsbcNetSampleApp')
     
     if(lpTag && lpTag.events && lpTag.events.bind) {
       lpTag.events.bind('VA_PANEL', 'EMBEDDED_BUTTON_IMPRESSION', function(eventData){
-        // console.log('mainCtrl callback for VA_PANEL/EMBEDDED_BUTTON_IMPRESSION event ',eventData);
+        console.log('mainCtrl callback for VA_PANEL/EMBEDDED_BUTTON_IMPRESSION event ',eventData);
         vm.debugInfo = '% '+eventData.name;
         $scope.$apply();
       });
@@ -87,18 +87,19 @@ angular.module('HsbcNetSampleApp')
 
     vm.changeLanguage = function(lang) {
       vm.customerLanguage = lang;
-      // console.log('--> change language func // ',vm.customerLanguage);
+      console.log('--> change language func // ',vm.customerLanguage);
       $location.path('/home/' + vm.customerCountry + '/' + vm.customerLanguage);
     };
 
     vm.changeCountry = function() {
       
       if(vm.selectedCountry == '') {
+        console.log('! selectedCountry is empty return');
         return;
       }
       console.log('you selected : ', vm.selectedCountry);
       vm.customerCountry = vm.selectedCountry;
-      // console.log('--> change country func // ',vm.customerCountry);
+      console.log('--> change country func // ',vm.customerCountry);
       $location.path('/home/' + vm.customerCountry + '/' + vm.countryLanguageMappings[vm.customerCountry].default);
     };
 
@@ -132,10 +133,13 @@ angular.module('HsbcNetSampleApp')
 
 
     lpTag.events.bind('LP_VA_PANEL_MODULE', '*', function (eventData, info){
-      console.log('// main.js // LP_VA_PANEL_MODULE // ',info.eventName);
+      console.log('// main.js // LP_VA_PANEL_MODULE // ',info.eventName, eventData);
       if(info.eventName == 'SHOULD_SHOW_BUTTON_CONTENT') {
         vm.refreshButtonContent(eventData);
         // put code here to show/hide the relevant live chat button HTML within the VA panel as required based on the button status online/offline/busy etc...
+      }
+      if(info.eventName == 'SHOULD_HIDE_BUTTON_CONTENT') {
+        vm.refreshButtonContent(eventData);
       }
       if (info.eventName == 'SHOULD_SHOW_VA_PANEL') {
         // code goes here to show the panel again

@@ -25,6 +25,11 @@ angular
         controller: 'AboutCtrl',
         controllerAs: 'vm'
       })
+      .when('/outside/:country?/:lang?', {
+        templateUrl: 'views/outside.html',
+        controller: 'OutsideCtrl',
+        controllerAs: 'vm'
+      })
       .otherwise({
         redirectTo: '/home/GB/en_uk'
       });

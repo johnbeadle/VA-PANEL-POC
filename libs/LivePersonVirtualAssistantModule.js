@@ -1,5 +1,5 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.2.0';
+  var _version = '2.3.0';
   var _config = {
     COUNTRY_CODE_LOCATION: 'cstatus',
     USING_PROXY_BUTTON: true,
@@ -19,6 +19,7 @@ var LivePersonVirtualAssistantModule = (function () {
       SHOW:'SHOULD_SHOW_VA_PANEL',
       HIDE:'SHOULD_HIDE_VA_PANEL',
       BUTTON_TO_DISPLAY:'SHOULD_SHOW_BUTTON_CONTENT',
+      BUTTON_REMOVED:'SHOULD_HIDE_BUTTON_CONTENT',
       CLOSE_THANKYOU_WINDOW:'DID_CLOSE_THANKYOU_WINDOW'
     }
   };
@@ -350,6 +351,16 @@ var LivePersonVirtualAssistantModule = (function () {
       // custom event to react to when other parts of the code detect the button loaded on the page is for the VA Panel
       lpTag.events.bind(_config.NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION, showTheLivePersonButtonInsideVaPanel);
 
+      // TODO: listen for footprint of lpTag.newPage call which will kill embedded buttons on the page. Should fire a HIDE event for the panel until the newPage is called again with a valid URL to refire button impression
+      lpTag.events.bind('LPTAG', 'TAGLET_RESTARTED', function(eventData,appName) {
+        if (eventData.name === 'rendererStub') {
+          console.log("[LP VA Module] ==> TAGLET_RESTARTED for rendererStub ");
+          _triggerEvent(_config.EVENTS.BUTTON_REMOVED, {
+            'status':'NA',
+            'reason': 'in-page navigation event - all buttons have been cleared - should hide chat button inside panel and await future button impression events to trigger...'
+          });
+        }
+      });
     }
 
   }
@@ -452,21 +463,6 @@ var LivePersonVirtualAssistantModule = (function () {
       }
     }
 
-    // var cartItems = lpTag.sdes.get('cart')[0] || false;
-    // console.log('[LP VA Module] ==> getCurrentLanguageSelection : cartItems // ',cartItems);
-    
-    // if(cartItems && cartItems.products && cartItems.products.length) {
-    //   for (let i = 0; i < cartItems.products.length; i++) {
-    //     var possibleLanguageSelection = cartItems.products[i].product.name || null;
-    //     if(isSupportedLanguage(possibleLanguageSelection)) {
-    //       currentLanguageSelection = possibleLanguageSelection;
-    //       foundSupportedLanguage = true;
-    //       console.log('[LP VA Module] ==> getCurrentLanguageSelection : foundSupportedLanguage // ',currentLanguageSelection);
-
-    //       break;
-    //     }
-    //   }
-    // }
     return currentLanguageSelection;
   }
 
