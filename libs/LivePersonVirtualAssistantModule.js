@@ -1,5 +1,5 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.3.0';
+  var _version = '2.4.0';
   var _config = {
     COUNTRY_CODE_LOCATION: 'cstatus',
     USING_PROXY_BUTTON: true,
@@ -357,7 +357,7 @@ var LivePersonVirtualAssistantModule = (function () {
           console.log("[LP VA Module] ==> TAGLET_RESTARTED for rendererStub ");
           _triggerEvent(_config.EVENTS.BUTTON_REMOVED, {
             'status':'NA',
-            'reason': 'in-page navigation event - all buttons have been cleared - should hide chat button inside panel and await future button impression events to trigger...'
+            'reason': 'rendererStub taglet restarted (possible in-page navigation event or multple tabs open on excluded pages) !!! all buttons have been cleared !!! you should hide chat button inside panel and await future button impression events to trigger...'
           });
         }
       });
@@ -367,7 +367,7 @@ var LivePersonVirtualAssistantModule = (function () {
 
   function triggerChatButtonClick(faqHistorySoFar) {
     // DOCS: https://developers.liveperson.com/trigger-click.html
-    var clicked;
+    var clicked = false;
 
     if (lpTag && lpTag.taglets && lpTag.taglets.rendererStub) {
       if (_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar.length > 0) {
@@ -403,6 +403,7 @@ var LivePersonVirtualAssistantModule = (function () {
       }
 
     }
+    return clicked;
   }
 
 
@@ -512,13 +513,23 @@ var LivePersonVirtualAssistantModule = (function () {
     var preChatLines = conversationSoFar || [];
     var state = checkButtonState();
     // only trigger the click function if the button is ONLINE
+    // TODO: check engagement exists and has not been cleared by the new page / multiple tabs issue
+    var buttonInfo = _config.EMBEDDED_BUTTON_INFO.id 
+      ? lpTag.taglets.rendererStub.getEngagementInfo(_config.EMBEDDED_BUTTON_INFO.id)
+      : false;
 
+    if (buttonInfo && (!buttonInfo.state || !buttonInfo.engagementId) ) {
+      console.error('! button been removed cannot trigger! notify VA Panel to update UI accordindly');
+      _triggerEvent(_config.EVENTS.BUTTON_REMOVED, {
+        'info': 'button been removed cannot trigger! notify VA Panel to update UI accordindly'
+      });
+    }
     if ( 
       (state == BUTTON_STATES.BUSY && _config.TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE) ||
       (state == BUTTON_STATES.OFFLINE && _config.TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE) ||
       (state == BUTTON_STATES.ONLINE)
     ) {
-      triggerChatButtonClick(preChatLines);
+      return triggerChatButtonClick(preChatLines);
     } else {
       return false;
     }
