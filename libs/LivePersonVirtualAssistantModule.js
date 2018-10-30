@@ -322,7 +322,7 @@ var LivePersonVirtualAssistantModule = (function () {
           });
         }
       });
-    }	    }
+    
     }
 
   }
