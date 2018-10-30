@@ -1,5 +1,5 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '3.0.0';
+  var _version = '3.1.0';
   var _config = {
     FIXED_LANGUAGE: true,
     DEFAULT_LANGUAGE: 'en',
@@ -21,6 +21,7 @@ var LivePersonVirtualAssistantModule = (function () {
       SHOW:'SHOULD_SHOW_VA_PANEL',
       HIDE:'SHOULD_HIDE_VA_PANEL',
       BUTTON_TO_DISPLAY:'SHOULD_SHOW_BUTTON_CONTENT',
+      BUTTON_REMOVED:'SHOULD_HIDE_BUTTON_CONTENT',
       CLOSE_THANKYOU_WINDOW:'DID_CLOSE_THANKYOU_WINDOW'
     }
   };
@@ -312,13 +313,23 @@ var LivePersonVirtualAssistantModule = (function () {
       // custom event to react to when other parts of the code detect the button loaded on the page is for the VA Panel
       lpTag.events.bind(_config.NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION, showTheLivePersonButtonInsideVaPanel);
 
+      lpTag.events.bind('LPTAG', 'TAGLET_RESTARTED', function(eventData,appName) {
+        if (eventData.name === 'rendererStub') {
+          console.log("[LP VA Module] ==> TAGLET_RESTARTED for rendererStub ");
+          _triggerEvent(_config.EVENTS.BUTTON_REMOVED, {
+            'status':'NA',
+            'reason': 'rendererStub taglet restarted (possible in-page navigation event or multple tabs open on excluded pages) !!! all buttons have been cleared !!! you should hide chat button inside panel and await future button impression events to trigger...'
+          });
+        }
+      });
+    }	    }
     }
 
   }
 
   function triggerChatButtonClick(faqHistorySoFar) {
     // DOCS: https://developers.liveperson.com/trigger-click.html
-    var clicked;
+    var clicked = false;
 
     if (lpTag && lpTag.taglets && lpTag.taglets.rendererStub) {
       if (_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar.length > 0) {
@@ -354,6 +365,7 @@ var LivePersonVirtualAssistantModule = (function () {
       }
 
     }
+    return clicked;
   }
 
 
@@ -425,12 +437,14 @@ var LivePersonVirtualAssistantModule = (function () {
     var closeBtn = document.querySelector('.lp_close'); // this is the class of the close button
 
     // if we find it, click to close the thank you screen
-    if (closeBtn) {
-      closeBtn.click();
-      _triggerEvent(_config.EVENTS.CLOSE_THANKYOU_WINDOW, {
-        'info': 'attempted to close thank you window'
-      });
-    }
+    setTimeout(function(){
+      if (closeBtn) {
+        closeBtn.click();
+        _triggerEvent(_config.EVENTS.CLOSE_THANKYOU_WINDOW, {
+          'info': 'attempted to close thank you window'
+        });
+      }
+    },500);
   }
 
 
@@ -460,13 +474,23 @@ var LivePersonVirtualAssistantModule = (function () {
     var preChatLines = conversationSoFar || [];
     var state = checkButtonState();
     // only trigger the click function if the button is ONLINE
+    // TODO: check engagement exists and has not been cleared by the new page / multiple tabs issue
+    var buttonInfo = _config.EMBEDDED_BUTTON_INFO.id 
+      ? lpTag.taglets.rendererStub.getEngagementInfo(_config.EMBEDDED_BUTTON_INFO.id)
+      : false;
+     if (buttonInfo && (!buttonInfo.state || !buttonInfo.engagementId) ) {
+      console.error('! button been removed cannot trigger! notify VA Panel to update UI accordindly');
+      _triggerEvent(_config.EVENTS.BUTTON_REMOVED, {
+        'info': 'button been removed cannot trigger! notify VA Panel to update UI accordindly'
+      });
+    }
 
     if ( 
       (state == BUTTON_STATES.BUSY && _config.TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE) ||
       (state == BUTTON_STATES.OFFLINE && _config.TRIGGER_CHAT_BUTTON_FROM_OFFLINE_STATE) ||
       (state == BUTTON_STATES.ONLINE)
     ) {
-      triggerChatButtonClick(preChatLines);
+      return triggerChatButtonClick(preChatLines);
     } else {
       return false;
     }
