@@ -165,6 +165,8 @@
             <button class="btn btn-danger" ng-if="mainCtrl.buttonState === 'OFFLINE'">Agents are offline </button>
             <button class="btn btn-danger" ng-if="mainCtrl.buttonState === 'NA'">NA</button>
             <BR>
+            <button class="btn btn-success" ng-click="mainCtrl.escalateToChat()">Debug</button>
+
             <p>
             (Button State ==> {{mainCtrl.buttonState}})  
             </p>  
