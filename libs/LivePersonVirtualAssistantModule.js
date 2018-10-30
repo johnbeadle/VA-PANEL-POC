@@ -474,12 +474,15 @@ var LivePersonVirtualAssistantModule = (function () {
     var closeBtn = document.querySelector('.lp_close'); // this is the class of the close button
 
     // if we find it, click to close the thank you screen
-    if (closeBtn) {
-      closeBtn.click();
-      _triggerEvent(_config.EVENTS.CLOSE_THANKYOU_WINDOW, {
-        'info': 'attempted to close thank you window'
-      });
-    }
+    setTimeout(function(){
+      if (closeBtn) {
+        closeBtn.click();
+        _triggerEvent(_config.EVENTS.CLOSE_THANKYOU_WINDOW, {
+          'info': 'attempted to close thank you window'
+        });
+      }
+    },500);
+
   }
 
 
