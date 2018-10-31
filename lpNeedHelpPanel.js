@@ -280,9 +280,6 @@ function closeThankyouWindow() {
   setTimeout(function(){
     if (closeBtn) {
       closeBtn.click();
-      _triggerEvent(_config.EVENTS.CLOSE_THANKYOU_WINDOW, {
-        'info': 'attempted to close thank you window'
-      });
     }
   },500);
 }
