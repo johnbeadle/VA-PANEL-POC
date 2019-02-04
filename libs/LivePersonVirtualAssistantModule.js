@@ -1,6 +1,8 @@
 var LivePersonVirtualAssistantModule = (function () {
-  var _version = '2.4.0';
+  var _version = '4.0.0';
   var _config = {
+    FIXED_LANGUAGE: true,
+    DEFAULT_LANGUAGE: 'en',
     COUNTRY_CODE_LOCATION: 'cstatus',
     USING_PROXY_BUTTON: true,
     TRIGGER_CHAT_BUTTON_FROM_BUSY_STATE:false,
@@ -24,7 +26,7 @@ var LivePersonVirtualAssistantModule = (function () {
     }
   };
 
-  var _supportedLanguages = ['en','fr','zh_hans','zh','zh_cn','zh_tw','ar','bm','es','es_mx','en_us'];
+  var _supportedLanguages = ['en'];
   var _abandonedChatEvents = ['waiting','preChat','chatting','postChat'];
   var _translations = {
     'default' : {
@@ -34,46 +36,6 @@ var LivePersonVirtualAssistantModule = (function () {
     'en': {
       'intro': 'Your conversation history so far ...',
       'suffix': 'An Agent will be with you shortly ...'
-    },
-    'en_us': {
-      'intro': 'Your conversation history so far ...',
-      'suffix': 'An Agent will be with you shortly ...'
-    },
-    'es_mx': {
-      'intro': 'Su historial de conversaciones hasta la fecha...',
-      'suffix': ''
-    },
-    'fr': {
-      'intro': 'Votre historique de conversations jusqu\'à présent...',
-      'suffix': 'Un agent vous répondra bientôt...'
-    },
-    'zh': {
-      'intro': '很快将会有座席代表与您聊天...',
-      'suffix': '很快将会有座席代表与您聊天...'
-    },
-    'zh_cn': {
-      'intro': '很快将会有座席代表与您聊天...',
-      'suffix': '很快将会有座席代表与您聊天...'
-    },
-    'zh_tw': {
-      'intro': '您目前的對談記錄...',
-      'suffix': '服務人員很快會與您聯絡...'
-    },
-    'zh_hans': {
-      'intro': '',
-      'suffix': 'Dentro de poco un agente estará con usted...'
-    },
-    'ar': {
-      'intro': '',
-      'suffix': ''
-    },
-    'bm': {
-      'intro': '',
-      'suffix': ''
-    },
-    'es': {
-      'intro': '',
-      'suffix': ''
     }
   };
 
@@ -351,7 +313,6 @@ var LivePersonVirtualAssistantModule = (function () {
       // custom event to react to when other parts of the code detect the button loaded on the page is for the VA Panel
       lpTag.events.bind(_config.NAMESPACE, _config.EVENTS.BUTTON_IMPRESSION, showTheLivePersonButtonInsideVaPanel);
 
-      // TODO: listen for footprint of lpTag.newPage call which will kill embedded buttons on the page. Should fire a HIDE event for the panel until the newPage is called again with a valid URL to refire button impression
       lpTag.events.bind('LPTAG', 'TAGLET_RESTARTED', function(eventData,appName) {
         if (eventData.name === 'rendererStub') {
           console.log("[LP VA Module] ==> TAGLET_RESTARTED for rendererStub ");
@@ -361,6 +322,7 @@ var LivePersonVirtualAssistantModule = (function () {
           });
         }
       });
+    
     }
 
   }
@@ -372,7 +334,7 @@ var LivePersonVirtualAssistantModule = (function () {
     if (lpTag && lpTag.taglets && lpTag.taglets.rendererStub) {
       if (_config.SEND_FAQ_CONVERSATION_AS_PRECHAT_LINES && faqHistorySoFar.length > 0) {
         // grab FAQ lines...this POC just gets the HTML content from specific class elements...you will use your own API and functions to get this information from the chat in progress.
-        var currentLanguage = getCurrentLanguageSelection();
+        var currentLanguage = _config.FIXED_LANGUAGE ? _config.DEFAULT_LANGUAGE : getCurrentLanguageSelection();
         var translations = isSupportedLanguage(currentLanguage) ? getLanguageTranslations(currentLanguage) : null;
         var preChatLinesArray = [];
         if(translations && translations.intro) {
@@ -483,7 +445,6 @@ var LivePersonVirtualAssistantModule = (function () {
         });
       }
     },500);
-
   }
 
 
@@ -514,11 +475,10 @@ var LivePersonVirtualAssistantModule = (function () {
     var state = checkButtonState();
     // only trigger the click function if the button is ONLINE
     // TODO: check engagement exists and has not been cleared by the new page / multiple tabs issue
-    var buttonInfo = _config.EMBEDDED_BUTTON_INFO.id 
+    var buttonInfo = _config.EMBEDDED_BUTTON_INFO && _config.EMBEDDED_BUTTON_INFO.id 
       ? lpTag.taglets.rendererStub.getEngagementInfo(_config.EMBEDDED_BUTTON_INFO.id)
       : false;
-
-    if (buttonInfo && (!buttonInfo.state || !buttonInfo.engagementId) ) {
+     if (buttonInfo && (!buttonInfo.state || !buttonInfo.engagementId) ) {
       console.error('! button been removed cannot trigger! notify VA Panel to update UI accordindly');
       _triggerEvent(_config.EVENTS.BUTTON_REMOVED, {
         'info': 'button been removed cannot trigger! notify VA Panel to update UI accordindly'
@@ -564,11 +524,22 @@ var LivePersonVirtualAssistantModule = (function () {
         'buttonContainer': buttonContainer,
         'buttonDiv': buttonDiv,
       });
-      if (lpTag && lpTag.sdes && lpTag.sdes.send) {
-        lpTag.sdes.send(sdes);
-      } else if (lpTag && lpTag.sdes.push) {
-        lpTag.sdes.push(sdes);
+      // modify to use newPage as we need to force updated URL and section 
+      if (lpTag && lpTag.newPage) {
+        console.log('_v4.0 CMB: lpTag.section sent via newPage sdes : ', lpTag.section, sdes, document.location.href);
+        lpTag.newPage(
+          document.location.href,
+          {
+            section: lpTag.section || [],
+            sdes: sdes
+          }
+        );
       }
+      // if (lpTag && lpTag.sdes && lpTag.sdes.send) {
+      //   lpTag.sdes.send(sdes);
+      // } else if (lpTag && lpTag.sdes.push) {
+      //   lpTag.sdes.push(sdes);
+      // }
       // ^ The above will tell LP that the div now exists and is ready to receive the content - online/offline/busy etc...
     }
   }

@@ -2,21 +2,18 @@
 
 /**
  * @ngdoc function
- * @name HsbcNetSampleApp.controller:MainCtrl
+ * @name HsbcCmbSampleApp.controller:MainCtrl
  * @description
  * # MainCtrl
- * Controller of the HsbcNetSampleApp
+ * Controller of the HsbcCmbSampleApp
  */
-angular
-  .module('HsbcNetSampleApp')
-  .controller('MainCtrl', function(
-    $scope,
-    $window,
-    $location,
-    $routeParams,
-    $route
-  ) {
-    this.awesomeThings = ['HTML5 Boilerplate', 'AngularJS', 'Karma'];
+angular.module('HsbcCmbSampleApp')
+  .controller('MainCtrl', function ($scope,$window,$location,$routeParams,$route) {
+    this.awesomeThings = [
+      'HTML5 Boilerplate',
+      'AngularJS',
+      'Karma'
+    ];
     var vm = this;
     vm.agentsAvailable = false;
     vm.agentsBusy = false;
@@ -66,8 +63,8 @@ angular
       }
     };
     // set language based on optional routeParams or fallback to default
-    $window.document.title = 'HSBCNet Develop';
-    $scope.$on('$routeChangeSuccess', function() {
+    $window.document.title = 'HSBC CMB Routing Develop';
+    $scope.$on('$routeChangeSuccess', function () {
       vm.customerLanguage = $routeParams.lang || defaultLanguage;
       vm.customerCountry = $routeParams.country || defaultCountry;
       vm.selectedCountry = vm.customerCountry;

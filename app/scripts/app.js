@@ -2,14 +2,14 @@
 
 /**
  * @ngdoc overview
- * @name HsbcNetSampleApp
+ * @name HsbcCmbSampleApp
  * @description
- * # HsbcNetSampleApp
+ * # HsbcCmbSampleApp
  *
  * Main module of the application.
  */
 angular
-  .module('HsbcNetSampleApp', [
+  .module('HsbcCmbSampleApp', [
     'ngCookies',
     'ngRoute'
   ])
@@ -20,9 +20,9 @@ angular
         controller: 'HomeCtrl',
         controllerAs: 'vm'
       })
-      .when('/about/:country?/:lang?', {
-        templateUrl: 'views/about.html',
-        controller: 'AboutCtrl',
+      .when('/account/:country?/:lang?', {
+        templateUrl: 'views/account.html',
+        controller: 'accountCtrl',
         controllerAs: 'vm'
       })
       .when('/outside/:country?/:lang?', {

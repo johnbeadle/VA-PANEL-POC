@@ -7,7 +7,7 @@
  * # MainCtrl
  * Controller of the HsbcNetSampleApp
  */
-angular.module('HsbcNetSampleApp')
+angular.module('HsbcCmbSampleApp')
   .controller('OutsideCtrl', function ($scope,$window,$location) {
     this.awesomeThings = [
       'EX1',
@@ -34,9 +34,9 @@ angular.module('HsbcNetSampleApp')
         }, 'quantity': 1
       }]
     };
-    var lpSection = ['hsbcnet','page-outside-location'];
+    var lpSection = ['cmb','non_account_page'];
 
-    var lpSdes =[
+    var lpSdes = [
       lpCountryTemplate,
       lpLanguageTemplate
     ];
@@ -47,7 +47,7 @@ angular.module('HsbcNetSampleApp')
       // Therefore call lpTag.newPage() using the URL from the u.data object and the SDEs from 
       // the data []
 
-      console.log('[about.js] --> lpTag.newPage found....calling ...', lpSection, lpSdes);
+      console.log('[outside.js non_account_page] --> lpTag.newPage found....calling ...', lpSection, lpSdes,document.location.href);
       lpTag.newPage(document.location.href,{
         section: lpSection,
         sdes: lpSdes
@@ -57,7 +57,7 @@ angular.module('HsbcNetSampleApp')
       // If we fall into this condition that means we must be loading the page via normal F5 page reload
       // so we do NOT want / need to call lpTag.newPage() and can leave the lpTag to bootstrap as normal
       // We should push the sdes into the lpTag.sdes object here so they are collected by the lpTag when it eventually starts
-      console.log('[about.js] --> lpTag.newPage not found -- initial page load ...', lpSdes);
+      console.log('[outside.js non_account_page] --> lpTag.newPage not found -- initial page load ...', lpSdes);
       lpTag.section = lpSection;
       lpTag.sdes.push(lpSdes);
 

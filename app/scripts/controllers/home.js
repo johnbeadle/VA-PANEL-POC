@@ -2,12 +2,12 @@
 
 /**
  * @ngdoc function
- * @name HsbcNetSampleApp.controller:MainCtrl
+ * @name HsbcCmbSampleApp.controller:MainCtrl
  * @description
  * # MainCtrl
- * Controller of the HsbcNetSampleApp
+ * Controller of the HsbcCmbSampleApp
  */
-angular.module('HsbcNetSampleApp')
+angular.module('HsbcCmbSampleApp')
   .controller('HomeCtrl', function ($scope,$window,$location) {
     this.awesomeThings = [
       'EX2',
@@ -35,7 +35,7 @@ angular.module('HsbcNetSampleApp')
         }, 'quantity': 1
       }]
     };
-    var lpSection = ['hsbcnet','page-home'];
+    var lpSection = ['hsbcmsbank','page-home'];
 
     var lpSdes =[
       lpCountryTemplate,
@@ -48,7 +48,7 @@ angular.module('HsbcNetSampleApp')
       // Therefore call lpTag.newPage() using the URL from the u.data object and the SDEs from 
       // the data []
 
-      console.log('[home.js] --> lpTag.newPage found....calling ...', lpSection, lpSdes);
+      console.log('[home.js] --> lpTag.newPage found....calling ...', lpSection, lpSdes,document.location.href);
       lpTag.newPage(document.location.href,{
         section: lpSection,
         sdes: lpSdes

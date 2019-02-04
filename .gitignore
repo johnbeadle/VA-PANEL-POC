@@ -16,4 +16,12 @@ test/coverage/report-html/libs/index.html
 test/coverage/report-lcov/lcov.info
 test/coverage/report-lcov/lcov-report/index.html
 test/coverage/report-lcov/lcov-report/libs/LivePersonVirtualAssistantModule.js.html
+<<<<<<< HEAD
 test/coverage/report-lcov/lcov-report/libs/index.html
+=======
+.DS_Store
+test/.DS_Store
+app/.DS_Store
+app/scripts/.DS_Store
+.vscode/launch.json
+>>>>>>> hsbc-msbank/stable
