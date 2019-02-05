@@ -35,7 +35,7 @@ angular.module('HsbcCmbSampleApp')
         }, 'quantity': 1
       }]
     };
-    var lpSection = ['hsbcmsbank','page-home'];
+    var lpSection = ['cmb','home_page'];
 
     var lpSdes =[
       lpCountryTemplate,

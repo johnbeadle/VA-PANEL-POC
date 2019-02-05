@@ -535,11 +535,11 @@ var LivePersonVirtualAssistantModule = (function () {
           }
         );
       }
-      // if (lpTag && lpTag.sdes && lpTag.sdes.send) {
-      //   lpTag.sdes.send(sdes);
-      // } else if (lpTag && lpTag.sdes.push) {
-      //   lpTag.sdes.push(sdes);
-      // }
+      if (lpTag && lpTag.sdes && lpTag.sdes.send) {
+        lpTag.sdes.send(sdes);
+      } else if (lpTag && lpTag.sdes.push) {
+        lpTag.sdes.push(sdes);
+      }
       // ^ The above will tell LP that the div now exists and is ready to receive the content - online/offline/busy etc...
     }
   }
