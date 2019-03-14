@@ -63,7 +63,7 @@ angular.module('HsbcCmbSampleApp')
       }
     };
     // set language based on optional routeParams or fallback to default
-    $window.document.title = 'HSBC CMB Routing Develop';
+    $window.document.title = 'HSBC CMB Routing Develop ';
     $scope.$on('$routeChangeSuccess', function () {
       vm.customerLanguage = $routeParams.lang || defaultLanguage;
       vm.customerCountry = $routeParams.country || defaultCountry;

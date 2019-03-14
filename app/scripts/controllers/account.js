@@ -34,12 +34,15 @@ angular.module('HsbcCmbSampleApp')
         }, 'quantity': 1
       }]
     };
-    var lpSection = ['cmb','account','account_page'];
+    var lpSection = ['cmb'];
 
     var lpSdes =[
       lpCountryTemplate,
       lpLanguageTemplate
     ];
+
+    $window.document.title = 'HSBC CMB Routing Develop onboarding.hsbc.co.uk';
+
     // send liveperson SDEs here
     if (lpTag && lpTag.loaded === true && lpTag.newPage) {
       // This means the lpTag is already on the page from a previous full page reload,
