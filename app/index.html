@@ -1,0 +1,197 @@
+<!doctype html>
+<html ng-app="HsbcCmbSampleApp">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css(.) styles/vendor.css -->
+    <!-- bower:css -->
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css(.tmp) styles/main.css -->
+    <meta name="viewport" content="user-scalable=0, width=device-width, initial-scale=1.0,  minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- endbuild -->
+  </head>
+  <script src="scripts/angular.min.js"></script>
+  <script src="scripts/angular-route.js"></script>
+  <script src="scripts/angular-cookies.js"></script>
+  <body ng-controller="MainCtrl as mainCtrl" ng-cloak>
+    
+    <div class="container-fluid">
+      <div class="header">
+        <div class="navbar navbar-default" role="navigation">
+          <div class="container">
+            <div class="navbar-header">
+        
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#js-navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+        
+              <a class="navbar-brand" href="#/home">HSBC CMB v4 POC SPA</a>
+            </div>
+        
+            <div class="collapse navbar-collapse" id="js-navbar-collapse">
+        
+              <ul class="nav navbar-nav">
+                <li class="active">
+                  <a href="#/home/{{mainCtrl.customerCountry}}/{{mainCtrl.customerLanguage}}">Home</a>
+                </li>
+                <li>
+                  <a ng-href="#/account/{{mainCtrl.customerCountry}}/{{mainCtrl.customerLanguage}}">account</a>
+                </li>
+                <li>
+                  <a ng-href="#/outside/{{mainCtrl.customerCountry}}/{{mainCtrl.customerLanguage}}">Outside campaign scope</a>
+                </li>
+                <!-- <li></li> -->
+              </ul>
+            </div>
+        
+          </div>
+        </div>
+        <div class="container">
+          <p ><i class="glyphicon glyphicon-globe"></i> Select  country & UI mode to emulate:
+            <select name="countrySelect" id="countrySelect" ng-model="mainCtrl.selectedCountry" ng-change="mainCtrl.changeCountry()">
+              <!-- <option value="default">Please Choose a country</option> -->
+              <option ng-repeat="(country,info) in mainCtrl.countryLanguageMappings" value="{{country}}" > {{info.desc}}</option>
+            </select>
+          </p>
+          <!-- <p> <BR>
+           
+            <span ng-repeat="(country,info) in mainCtrl.countryLanguageMappings">
+              <a class="glyphicon glyphicon-globe" ng-click="mainCtrl.changeCountry(country)">{{info.desc}}</a> <BR>
+            </span>
+          </p> -->
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                <!-- <th>#</th> -->
+                <th>Selected Country</th>
+                <th>Supported Languages</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="(country,info) in mainCtrl.countryLanguageMappings" ng-show="mainCtrl.customerCountry == country">
+                <td>
+                  <i class="glyphicon glyphicon-globe"></i> {{mainCtrl.customerCountry}} ({{info.desc}})
+                </td>
+                <td>
+                  <ul>
+                    <li>
+                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage(info.default)">{{info.default}}</a>
+                    </li>
+                    <li ng-repeat="supported_language in info.other">
+                      <a class="glyphicon glyphicon-flag" ng-click="mainCtrl.changeLanguage(supported_language)">{{supported_language}}</a>
+                    </li>
+                  </ul>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div ng-view class="container-fluid"></div>
+      <div id="slideout" >
+        <p class="btn btn-primary need-help vertical-text" id="need-help" ng-click="mainCtrl.togglePanel()">Need Help?</p>
+        <form>
+          <h4 class="display1">FAQ converstion goes here...</h4>
+      
+          <div class="faq-lines ">
+            <ul class="list-group">
+              <li class="list-group-item faq-chat-line">
+                <b>Customer:</b> Hello</li>
+              <li class="list-group-item faq-chat-line">
+                <b>Virtual Assistant:</b> How can I help you?</li>
+              <li class="list-group-item faq-chat-line alert-warning">
+                <b>Customer:</b> I cannot login</li>
+              <li class="list-group-item faq-chat-line">
+                <b>Virtual Assistant:</b> Sorry I cannot answer that question for you...
+                <br> would you like to speak with an agent?
+                <BR>
+
+              </li>
+
+            </ul>
+
+            <button class="btn btn-success" ng-click="mainCtrl.escalateToChat()" ng-if="mainCtrl.buttonState === 'ONLINE'">Start a LiveChat</button>
+            <button class="btn btn-warning" ng-if="mainCtrl.buttonState === 'BUSY'">Agents are Busy - try again</button>
+            <button class="btn btn-danger" ng-if="mainCtrl.buttonState === 'OFFLINE'">Agents are offline </button>
+            <button class="btn btn-danger" ng-if="mainCtrl.buttonState === 'NA'">NA</button>
+            <BR>
+            <button class="btn btn-success" ng-click="mainCtrl.escalateToChat()">Debug</button>
+
+            <p>
+            (Button State ==> {{mainCtrl.buttonState}})  
+            </p>  
+
+          </div>
+          <HR>
+          <h5> ----- DEBUG ONLY ----</h5>
+          <p class="bg-info">
+            {{mainCtrl.debugInfo}}
+          </p>
+          <HR>
+          <p>The area below contains the actual container for the lp button. Depending on which escalation button option is used, this may not be seen by anybody. Included here for reference to show what is actually pushed by LE2. Again this content is controlled in LE2 and may or may not be anything visible. The code of the panel integration responds to the event and button state - not the content itself</p>
+          <p id="button-container">
+            <a id="lp-va-panel-button-online" href="#" class="btn btn-success lp-va-panel-button hide-lp-button" onclick="LivePersonVirtualAssistantModule.escalateToChat();">Click to chat</a>
+            <a id="lp-va-panel-button-offline" href="#" class="btn btn-warning lp-va-panel-button hide-lp-button">All Agents are OFFLINE/BUSY</a>
+          </p>
+        </form>
+      </div>
+      <div class="footer">
+        <div class="container">
+        </div>
+      </div>
+    </div>
+    <!--[if lte IE 8]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+
+    <!-- Add your site or application content here -->
+
+
+
+    <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
+     <script>
+       !function(A,n,g,u,l,a,r){A.GoogleAnalyticsObject=l,A[l]=A[l]||function(){
+       (A[l].q=A[l].q||[]).push(arguments)},A[l].l=+new Date,a=n.createElement(g),
+       r=n.getElementsByTagName(g)[0],a.src=u,r.parentNode.insertBefore(a,r)
+       }(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+       ga('create', 'UA-XXXXX-X');
+       ga('send', 'pageview');
+    </script>
+    <script type="text/javascript">
+       window.lpTag = window.lpTag || {};
+       lpTag.site = "90233546"; // jbeadle account number            
+      //  lpTag.site = "4692846"; // HSBCNet Dev account number            
+    </script>
+    <script>
+      // window.lpTag = window.lpTag || {}, "undefined" == typeof window.lpTag._tagCount ? (window.lpTag = { site: lpTag.site || "88016402", section: lpTag.section || "", tagletSection: lpTag.tagletSection || null, autoStart: lpTag.autoStart !== !1, ovr: lpTag.ovr || {}, _v: "1.7.0", _tagCount: 1, protocol: "https:", events: { bind: function (t, e, i) { lpTag.defer(function () { lpTag.events.bind(t, e, i) }, 0) }, trigger: function (t, e, i) { lpTag.defer(function () { lpTag.events.trigger(t, e, i) }, 1) } }, defer: function (t, e) { 0 == e ? (this._defB = this._defB || [], this._defB.push(t)) : 1 == e ? (this._defT = this._defT || [], this._defT.push(t)) : (this._defL = this._defL || [], this._defL.push(t)) }, load: function (t, e, i) { var n = this; setTimeout(function () { n._load(t, e, i) }, 0) }, _load: function (t, e, i) { var n = t; t || (n = this.protocol + "//" + (this.ovr && this.ovr.domain ? this.ovr.domain : "lptag.liveperson.net") + "/tag/tag.js?site=" + this.site); var a = document.createElement("script"); a.setAttribute("charset", e ? e : "UTF-8"), i && a.setAttribute("id", i), a.setAttribute("src", n), document.getElementsByTagName("head").item(0).appendChild(a) }, init: function () { this._timing = this._timing || {}, this._timing.start = (new Date).getTime(); var t = this; window.attachEvent ? window.attachEvent("onload", function () { t._domReady("domReady") }) : (window.addEventListener("DOMContentLoaded", function () { t._domReady("contReady") }, !1), window.addEventListener("load", function () { t._domReady("domReady") }, !1)), "undefined" == typeof window._lptStop && this.load() }, start: function () { this.autoStart = !0 }, _domReady: function (t) { this.isDom || (this.isDom = !0, this.events.trigger("LPT", "DOM_READY", { t: t })), this._timing[t] = (new Date).getTime() }, vars: lpTag.vars || [], dbs: lpTag.dbs || [], ctn: lpTag.ctn || [], sdes: lpTag.sdes || [], ev: lpTag.ev || [] }, lpTag.init()) : window.lpTag._tagCount += 1;
+
+
+window.lpTag=window.lpTag||{},'undefined'==typeof window.lpTag._tagCount?(window.lpTag={wl:lpTag.wl||null,scp:lpTag.scp||null,site:'90233546'||'',section:lpTag.section||'',tagletSection:lpTag.tagletSection||null,autoStart:lpTag.autoStart!==!1,ovr:lpTag.ovr||{},_v:'1.10.0',_tagCount:1,protocol:'https:',events:{bind:function(t,e,i){lpTag.defer(function(){lpTag.events.bind(t,e,i)},0)},trigger:function(t,e,i){lpTag.defer(function(){lpTag.events.trigger(t,e,i)},1)}},defer:function(t,e){0===e?(this._defB=this._defB||[],this._defB.push(t)):1===e?(this._defT=this._defT||[],this._defT.push(t)):(this._defL=this._defL||[],this._defL.push(t))},load:function(t,e,i){var n=this;setTimeout(function(){n._load(t,e,i)},0)},_load:function(t,e,i){var n=t;t||(n=this.protocol+'//'+(this.ovr&&this.ovr.domain?this.ovr.domain:'lptag.liveperson.net')+'/tag/tag.js?site='+this.site);var o=document.createElement('script');o.setAttribute('charset',e?e:'UTF-8'),i&&o.setAttribute('id',i),o.setAttribute('src',n),document.getElementsByTagName('head').item(0).appendChild(o)},init:function(){this._timing=this._timing||{},this._timing.start=(new Date).getTime();var t=this;window.attachEvent?window.attachEvent('onload',function(){t._domReady('domReady')}):(window.addEventListener('DOMContentLoaded',function(){t._domReady('contReady')},!1),window.addEventListener('load',function(){t._domReady('domReady')},!1)),'undefined'===typeof window._lptStop&&this.load()},start:function(){this.autoStart=!0},_domReady:function(t){this.isDom||(this.isDom=!0,this.events.trigger('LPT','DOM_READY',{t:t})),this._timing[t]=(new Date).getTime()},vars:lpTag.vars||[],dbs:lpTag.dbs||[],ctn:lpTag.ctn||[],sdes:lpTag.sdes||[],hooks:lpTag.hooks||[],identities:lpTag.identities||[],ev:lpTag.ev||[]},lpTag.init()):window.lpTag._tagCount+=1;
+
+
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <!-- <script src="../libs/LivePersonVirtualAssistantModule.min.js"></script> -->
+    <script src="../libs/LivePersonVirtualAssistantModule.js"></script>
+    <script src="scripts/app.js"></script>
+    <script src="scripts/controllers/main.js"></script>
+    <script src="scripts/controllers/home.js"></script>
+    <script src="scripts/controllers/account.js"></script>
+    <script src="scripts/controllers/outside.js"></script>
+</body>
+</html>
